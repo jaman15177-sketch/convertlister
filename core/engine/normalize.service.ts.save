@@ -1,0 +1,10 @@
+truncate -s 0 core/engine/normalize.service.tsimport { Product } from "../product.model";
+import { ManualAdapter } from "../adapters/manual.adapter";
+
+export class NormalizeService {
+  constructor(private adapter = new ManualAdapter()) {}
+
+  run(input: any): Product {
+    return this.adapter.normalize(input);
+  }
+}

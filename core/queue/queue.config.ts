@@ -1,0 +1,4 @@
+export const QUEUE_CONFIG = {
+  MAX_BATCH_SIZE: 30,
+  CONCURRENT_WORKERS: 1,
+};
