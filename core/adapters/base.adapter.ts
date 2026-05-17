@@ -1,6 +1,14 @@
-import { Product } from "../core/product.model";
+export interface Product {
+  id: string
+  title: string
+  url: string
+  price: number
+  rating: number
+  reviews: number
+  source?: string
+}
 
 export interface BaseAdapter {
-  fetch(): Promise<any[]>;      // raw data
-  normalize(raw: any): Product; // convert to universal format
+
+  fetch(limit: number): Promise<Product[]>
 }

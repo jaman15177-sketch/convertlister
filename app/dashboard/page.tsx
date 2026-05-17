@@ -1,49 +1,77 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase-client"
 
 export default function Dashboard() {
-  const [file, setFile] = useState<File | null>(null);
-  const [result, setResult] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
 
-  async function handleProcess() {
-    if (!file) return;
+  const [items, setItems] = useState<any[]>([])
 
-    setLoading(true);
+  async function load() {
 
-    const res = await fetch("/api/mock", {
-      method: "POST",
-      body: JSON.stringify({ name: file.name }),
-    });
+    const { data } =
+      await supabase
+        .from("product_metrics")
+        .select("*")
+        .order("winning_score", {
+          ascending: false
+        })
 
-    const data = await res.json();
-    setResult(data);
-
-    setLoading(false);
+    setItems(data || [])
   }
 
+  useEffect(() => {
+
+    load()
+
+    const channel =
+      supabase
+        .channel("live-products")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "product_metrics"
+          },
+          () => load()
+        )
+        .subscribe()
+
+    return () =>
+      supabase.removeChannel(channel)
+
+  }, [])
+
   return (
-    <div style={{ padding: 40 }}>
-      <h1>ConvertLister Dashboard</h1>
+    <div style={{ padding: 20 }}>
 
-      <input
-        type="file"
-        onChange={(e) => setFile(e.target.files?.[0] || null)}
-      />
+      <h1>🔥 Winning Products SaaS</h1>
 
-      <button onClick={handleProcess} style={{ marginTop: 20 }}>
-        {loading ? "Processing..." : "Process Image"}
-      </button>
+      {items.map((p, i) => (
 
-      {result && (
-        <div style={{ marginTop: 30 }}>
-          <h3>Result</h3>
-          <p>Score: {result.score}</p>
-          <p>Grade: {result.grade}</p>
-          <p>Prediction: {result.prediction}</p>
+        <div key={i}
+          style={{
+            padding: 10,
+            border: "1px solid #ddd",
+            marginBottom: 10
+          }}
+        >
+
+          <h3>{p.title}</h3>
+
+          <p>💰 ${p.price}</p>
+          <p>⭐ {p.rating}</p>
+          <p>📊 {p.reviews_count}</p>
+
+          <p>
+            🏆 SCORE: {p.winning_score}
+          </p>
+
         </div>
-      )}
+
+      ))}
+
     </div>
-  );
+  )
 }

@@ -1,40 +1,101 @@
-import { BatchQueue } from "./batch.queue";
-import { BatchItem, BatchResult } from "./batch.types";
+import { calculateWinningScore }
+from "../engine/scorer"
 
-export class BatchProcessor {
+import { isWinningProduct }
+from "../engine/winner.filter"
 
-  constructor(private queue: BatchQueue) {}
+import { optimizeProduct }
+from "../engine/optimizer"
 
-  async processAll(
-    handler: (item: BatchItem) => Promise<string>
-  ): Promise<BatchResult[]> {
+import { calculateTrendScore }
+from "../trends/trend.engine"
 
-    const results: BatchResult[] = [];
+// =========================
+// 🆕 DATABASE PIPELINE
+// =========================
+import { saveWinnerProduct }
+from "../database/winner.repo"
 
-    while (this.queue.size() > 0) {
+export async function processBatch(
+  products: any[]
+) {
 
-      const item = this.queue.next();
-      if (!item) break;
+  const winners = []
 
-      try {
-        const output = await handler(item);
+  for (const product of products) {
 
-        results.push({
-          id: item.id,
-          success: true,
-          output
-        });
+    console.log(
+      "⚙️ PROCESSING:",
+      product.title
+    )
 
-      } catch (error: any) {
+    // =========================
+    // AI SCORE
+    // =========================
+    const aiScore =
+      calculateWinningScore(product)
 
-        results.push({
-          id: item.id,
-          success: false,
-          error: error.message
-        });
-      }
+    // =========================
+    // TREND SCORE
+    // =========================
+    const trend =
+      calculateTrendScore(product)
+
+    const finalScore =
+      Math.round(
+        aiScore * 0.6 +
+        trend.trend_score * 0.4
+      )
+
+    // =========================
+    // FILTER
+    // =========================
+    if (!isWinningProduct(finalScore)) {
+
+      console.log(
+        "❌ REJECTED:",
+        product.title
+      )
+
+      continue
     }
 
-    return results;
+    // =========================
+    // OPTIMIZE
+    // =========================
+    const optimized =
+      optimizeProduct(product.title)
+
+    const winnerProduct = {
+
+      ...product,
+
+      ai_score: aiScore,
+      trend_score:
+        trend.trend_score,
+      final_score: finalScore,
+      category: trend.category,
+      optimized
+    }
+
+    console.log(
+      "🏆 WINNER SAVED:",
+      product.title
+    )
+
+    // =========================
+    // 💾 SAVE TO DATABASE
+    // =========================
+    await saveWinnerProduct(
+      winnerProduct
+    )
+
+    winners.push(winnerProduct)
+
+    await new Promise(
+      r => setTimeout(r, 500)
+    )
   }
+
+  return winners
 }
