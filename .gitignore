@@ -30,14 +30,47 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# =========================
+# ENVIRONMENT (CRITICAL)
+# =========================
+.env
+.env.*
+!.env.example
+!.env.template
 
-# vercel
-.vercel
+# =========================
+# LOGS / TEMP FILES
+# =========================
+*.log
+*.save
+*.bak
+*.tmp
 
-# typescript
+# =========================
+# SYSTEM / OS
+# =========================
+.DS_Store
+
+# =========================
+# BUILD ARTIFACTS
+# =========================
+.next
+out
+build
+dist
+
+# =========================
+# TYPESCRIPT CACHE
+# =========================
 *.tsbuildinfo
 next-env.d.ts
 
+# =========================
+# ARCHIVES
+# =========================
+*.tar.gz
 
+# =========================
+# DEPLOYMENT
+# =========================
+.vercel
