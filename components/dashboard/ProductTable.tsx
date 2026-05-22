@@ -1,157 +1,112 @@
-async function getProducts() {
-  const res = await fetch(
-    "http://localhost:3000/api/trends",
-    {
-      cache: "no-store",
-    }
-  );
+"use client";
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch products");
-  }
+import { useEffect, useState } from "react";
 
-  return res.json();
+interface Product {
+  id?: string;
+  title: string;
+  score: number;
+  label?: string;
+  trend?: string;
 }
 
-export default async function ProductTable() {
-  const products = await getProducts();
-
-  return (
-    <div className="bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-zinc-900">
-            <tr>
-              <th className="text-left px-6 py-4">
-                Product
-              </th>
-
-              <th className="text-left px-6 py-4">
-                Source
-              </th>
-
-              <th className="text-left px-6 py-4">
-                Score
-              </th>
-
-              <th className="text-left px-6 py-4">
-                Status
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {products.map((product: any) => (
-              <tr
-                key={product.id}
-                className="border-t border-zinc-900 hover:bg-zinc-900/40 transition"
-              >
-                <td className="px-6 py-5 font-semibold">
-                  {product.keyword}
-                </td>
-
-                <td className="px-6 py-5 text-zinc-300">
-                  {product.source}
-                </td>
-
-                <td className="px-6 py-5 font-bold text-lg">
-                  {product.score}
-                </td>
-
-                <td className="px-6 py-5">
-                  <span
-                    className={`px-4 py-2 rounded-full text-sm font-semibold ${
-                      product.label === "SUPER WINNER"
-                        ? "bg-white text-black"
- async function getProducts() {
-  const res = await fetch(
-    "http://localhost:3000/api/trends",
-    {
+async function getProducts(): Promise<Product[]> {
+  try {
+    const res = await fetch("/api/trends", {
       cache: "no-store",
+    });
+
+    if (!res.ok) {
+      return [];
     }
-  );
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch products");
+    const data = await res.json();
+
+    return Array.isArray(data) ? data : data.products || [];
+  } catch (error) {
+    console.error("Failed to fetch products:", error);
+    return [];
   }
-
-  return res.json();
 }
 
-export default async function ProductTable() {
-  const products = await getProducts();
+export default function ProductTable() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadProducts() {
+      const data = await getProducts();
+      setProducts(data);
+      setLoading(false);
+    }
+
+    loadProducts();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="rounded-2xl border p-6">
+        <p>Loading products...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="bg-zinc-950 border border-zinc-800 rounded-3xl overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead className="bg-zinc-900">
+    <div className="rounded-2xl border p-6 overflow-x-auto">
+      <div className="mb-4">
+        <h2 className="text-2xl font-bold">Trending Products</h2>
+        <p className="text-sm opacity-70">
+          AI-ranked winning products dashboard
+        </p>
+      </div>
+
+      <table className="w-full border-collapse">
+        <thead>
+          <tr className="border-b">
+            <th className="text-left p-3">Title</th>
+            <th className="text-left p-3">Score</th>
+            <th className="text-left p-3">Trend</th>
+            <th className="text-left p-3">Label</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {products.length === 0 ? (
             <tr>
-              <th className="text-left px-6 py-4">
-                Product
-              </th>
-
-              <th className="text-left px-6 py-4">
-                Source
-              </th>
-
-              <th className="text-left px-6 py-4">
-                Score
-              </th>
-
-              <th className="text-left px-6 py-4">
-                Status
-              </th>
+              <td colSpan={4} className="p-4 text-center">
+                No products found
+              </td>
             </tr>
-          </thead>
-
-          <tbody>
-            {products.map((product: any) => (
+          ) : (
+            products.map((product, index) => (
               <tr
-                key={product.id}
-                className="border-t border-zinc-900 hover:bg-zinc-900/40 transition"
+                key={product.id || index}
+                className="border-b hover:bg-gray-50 transition"
               >
-                <td className="px-6 py-5 font-semibold">
-                  {product.keyword}
+                <td className="p-3 font-medium">{product.title}</td>
+
+                <td className="p-3">{product.score}</td>
+
+                <td className="p-3">
+                  {product.trend || "Unknown"}
                 </td>
 
-                <td className="px-6 py-5 text-zinc-300">
-                  {product.source}
-                </td>
-
-                <td className="px-6 py-5 font-bold text-lg">
-                  {product.score}
-                </td>
-
-                <td className="px-6 py-5">
+                <td className="p-3">
                   <span
-                    className={`px-4 py-2 rounded-full text-sm font-semibold ${
+                    className={`px-3 py-1 rounded-full text-sm font-semibold ${
                       product.label === "SUPER WINNER"
-                        ? "bg-white text-black"
-                        : "bg-zinc-800 text-white"
+                        ? "bg-black text-white"
+                        : "bg-gray-200 text-black"
                     }`}
                   >
-                    {product.label}
+                    {product.label || "NORMAL"}
                   </span>
                 </td>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}                       : "bg-zinc-800 text-white"
-                    }`}
-                  >
-                    {product.label}
-                  </span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            ))
+          )}
+        </tbody>
+      </table>
     </div>
   );
 }

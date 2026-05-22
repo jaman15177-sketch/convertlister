@@ -1,33 +1,57 @@
-import Redis from "ioredis"
+// core/rate/queue.rate.ts
 
-const redis = new Redis()
+type RateLimitResult = {
+  allowed: boolean;
+  remaining: number;
+  resetAt: number;
+};
 
-// ==========================
-// CONFIG
-// ==========================
-const MAX_QUEUE_SIZE = 500
+const memoryStore = new Map<string, { count: number; resetAt: number }>();
 
-// ==========================
-// CHECK QUEUE CAPACITY
-// ==========================
-export async function canAcceptJob(): Promise<boolean> {
+const DEFAULT_LIMIT = 10; // per minute fallback
 
-  const size = await redis.llen("queue:jobs")
+export async function enforceRateLimit(
+  key: string,
+  limit: number = DEFAULT_LIMIT
+): Promise<RateLimitResult> {
+  const now = Date.now();
 
-  console.log("📊 QUEUE SIZE:", size)
+  const existing = memoryStore.get(key);
 
-  return size < MAX_QUEUE_SIZE
+  if (!existing || existing.resetAt < now) {
+    const resetAt = now + 60 * 1000;
+
+    memoryStore.set(key, {
+      count: 1,
+      resetAt,
+    });
+
+    return {
+      allowed: true,
+      remaining: limit - 1,
+      resetAt,
+    };
+  }
+
+  if (existing.count >= limit) {
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: existing.resetAt,
+    };
+  }
+
+  existing.count += 1;
+
+  return {
+    allowed: true,
+    remaining: limit - existing.count,
+    resetAt: existing.resetAt,
+  };
 }
 
-// ==========================
-// OVERLOAD PROTECTION
-// ==========================
-export async function enforceRateLimit() {
+export async function resetRateLimit(key: string) {
+  memoryStore.delete(key);
 
-  const allowed = await canAcceptJob()
-
-  if (!allowed) {
-
-    throw new Error("QUEUE_OVERLOADED")
-  }
+  return { success: true };
 }

@@ -17,3 +17,6 @@ export function scoreProduct(p: any) {
 
   return Math.round(score)
 }
+export function calculateWinningScore(product: any) {
+  return 100;
+}

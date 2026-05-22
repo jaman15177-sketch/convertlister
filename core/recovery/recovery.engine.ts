@@ -1,40 +1,33 @@
-import Redis from "ioredis"
-import { addJob } from "../queue/redis.queue"
+// core/recovery/recovery.engine.ts
 
-const redis = new Redis()
+type RecoveryEvent = {
+  id: string;
+  type: string;
+  payload?: any;
+  error?: string;
+};
 
-const STUCK_TIME = 60 * 1000 // 60 sec threshold
+const memoryRecoveryLog: RecoveryEvent[] = [];
 
-export async function runRecovery() {
+export async function logRecovery(event: RecoveryEvent) {
+  memoryRecoveryLog.push(event);
 
-  console.log("♻️ CRASH RECOVERY STARTED")
+  console.log("🛟 Recovery logged:", event.id);
 
-  const processing = await redis.lrange("queue:processing", 0, -1)
+  return {
+    success: true,
+    total: memoryRecoveryLog.length,
+  };
+}
 
-  for (const item of processing) {
+export async function getRecoveryLogs() {
+  return memoryRecoveryLog;
+}
 
-    const job = JSON.parse(item)
+export async function clearRecoveryLogs() {
+  memoryRecoveryLog.length = 0;
 
-    const age = Date.now() - (job.startedAt || Date.now())
-
-    // =========================
-    // STUCK JOB DETECTION
-    // =========================
-    if (age > STUCK_TIME) {
-
-      console.log("🔁 RECOVERING JOB:", job.url)
-
-      // remove from processing
-      await redis.lrem(
-        "queue:processing",
-        1,
-        item
-      )
-
-      // requeue safely
-      await addJob(job)
-    }
-  }
-
-  console.log("🏁 RECOVERY COMPLETE")
+  return {
+    success: true,
+  };
 }

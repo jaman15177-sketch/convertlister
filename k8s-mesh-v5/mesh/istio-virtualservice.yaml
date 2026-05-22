@@ -1,0 +1,28 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: saas-routing
+  namespace: saas-mesh
+spec:
+  hosts:
+    - "*"
+  gateways:
+    - saas-gateway
+  http:
+    - match:
+        - uri:
+            prefix: /auth
+      route:
+        - destination:
+            host: auth-service
+            port:
+              number: 80
+
+    - match:
+        - uri:
+            prefix: /api
+      route:
+        - destination:
+            host: core-service
+            port:
+              number: 80

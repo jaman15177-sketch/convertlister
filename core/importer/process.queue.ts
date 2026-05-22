@@ -1,51 +1,52 @@
-import { nextProduct } from "../queue/import.queue"
-import { processProduct } from "../pipeline/winner.pipeline"
+import { processProduct } from "../pipeline/winner.pipeline";
 
-export async function processQueue() {
+interface QueueItem {
+  id?: string;
+  type?: string;
+  payload: {
+    title?: string;
+    url?: string;
+    score?: number;
+    [key: string]: any;
+  };
+}
 
-  console.log("⚙️ PROCESSING START")
+export async function processQueue(items: QueueItem[] = []) {
+  console.log("🚀 PROCESS QUEUE STARTED");
 
-  while (true) {
+  const results: any[] = [];
 
-    const product = nextProduct()
-
-    if (!product) {
-
-      console.log("🏁 QUEUE EMPTY")
-
-      break
-    }
-
+  for (const item of items) {
     try {
+      const product = item.payload;
 
-      console.log(
-        "⚙️ PROCESSING:",
-        product.title
-      )
+      if (!product) continue;
 
-      const result =
-        await processProduct(product)
+      const result = await processProduct(product);
 
-      // =====================
-      // SAFE CHECK
-      // =====================
-      if (!result) {
+      const status = result?.success ? "success" : "failed";
 
-        console.log("⚠️ SKIPPED NULL RESULT")
-        continue
-      }
+      console.log("📊 RESULT:", {
+        status,
+        success: result?.success,
+        processed: (result as any)?.processed ?? 0,
+        inserted: (result as any)?.inserted ?? 0,
+      });
 
-      console.log(
-        "📊 RESULT:",
-        result.status
-      )
-
+      results.push(result);
     } catch (err) {
+      console.error("❌ Queue Error:", err);
 
-      console.log(
-        "❌ ERROR:",
-        err
-      )
+      results.push({
+        success: false,
+        error: err,
+      });
     }
   }
+
+  return {
+    success: true,
+    total: items.length,
+    results,
+  };
 }

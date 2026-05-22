@@ -1,36 +1,17 @@
-import Redis from "ioredis"
+const processedKeys = new Set<string>();
 
-const redis = new Redis()
-
-const TTL = 60 * 60 // 1 hour
-
-/**
- * CHECK + LOCK (ATOMICS)
- */
-export async function isDuplicate(urlHash: string): Promise<boolean> {
-
-  const exists = await redis.exists(`dedupe:${urlHash}`)
-
-  return exists === 1
+export async function isProcessed(key: string): Promise<boolean> {
+  return processedKeys.has(key);
 }
 
-/**
- * REGISTER JOB (LOCK KEY)
- */
-export async function registerJob(urlHash: string) {
+export async function markProcessed(key: string): Promise<void> {
+  processedKeys.add(key);
 
-  await redis.set(
-    `dedupe:${urlHash}`,
-    "1",
-    "EX",
-    TTL
-  )
+  console.log("Marked processed:", key);
 }
 
-/**
- * REMOVE (optional cleanup)
- */
-export async function clearJob(urlHash: string) {
+export async function clearProcessed(): Promise<void> {
+  processedKeys.clear();
 
-  await redis.del(`dedupe:${urlHash}`)
+  console.log("Processed keys cleared");
 }

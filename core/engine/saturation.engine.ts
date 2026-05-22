@@ -28,3 +28,6 @@ export function saturationEngine(product: any) {
   // 🧠 ensure never negative
   return Math.max(0, score)
 }
+export function saturationScore(product: any): number {
+  return 50;
+}

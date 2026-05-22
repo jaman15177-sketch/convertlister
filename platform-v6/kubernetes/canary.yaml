@@ -1,0 +1,18 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: canary-routing
+spec:
+  hosts:
+    - core-service
+  http:
+    - route:
+        - destination:
+            host: core-service
+            subset: stable
+          weight: 90
+
+        - destination:
+            host: core-service
+            subset: canary
+          weight: 10

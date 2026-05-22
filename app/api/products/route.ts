@@ -1,6 +1,6 @@
-import { supabase } from "@/lib/supabase-client"
+import { getSupabase } from "@/lib/supabase-client";
 
-export async function GET() {
+const supabase = getSupabase();export async function GET() {
 
   const { data } =
     await supabase

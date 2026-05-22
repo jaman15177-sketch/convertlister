@@ -1,20 +1,17 @@
-import { runPipeline } from "@/src/pipeline/runPipeline";
+import { runScheduler } from "@/lib/jobos/core/scheduler";
 
 export async function GET() {
   try {
-    await runPipeline();
+    const result = await runScheduler();
 
     return Response.json({
       success: true,
-      message: "Pipeline executed successfully",
+      result,
       time: new Date().toISOString(),
     });
-  } catch (error: any) {
+  } catch (e: any) {
     return Response.json(
-      {
-        success: false,
-        error: error.message,
-      },
+      { success: false, error: e.message },
       { status: 500 }
     );
   }

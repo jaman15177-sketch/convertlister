@@ -1,77 +1,69 @@
-"use client"
+import Sidebar from "@/components/dashboard/Sidebar";
+import StatsCards from "@/components/dashboard/StatsCards";
+import JobsTable from "@/components/dashboard/JobsTable";
 
-import { useEffect, useState } from "react"
-import { supabase } from "@/lib/supabase-client"
+import { createSupabaseServer } from "@/lib/supabase/server";
 
-export default function Dashboard() {
+export default async function DashboardPage() {
+  const supabase = await createSupabaseServer();
 
-  const [items, setItems] = useState<any[]>([])
+  let jobs: any[] = [];
 
-  async function load() {
+  try {
+    const { data, error } = await supabase
+      .from("jobs")
+      .select("*")
+      .limit(10);
 
-    const { data } =
-      await supabase
-        .from("product_metrics")
-        .select("*")
-        .order("winning_score", {
-          ascending: false
-        })
-
-    setItems(data || [])
+    if (error) {
+      console.error("❌ Supabase error:", error.message);
+    } else {
+      jobs = data || [];
+    }
+  } catch (err) {
+    console.error("❌ Dashboard fetch failed:", err);
   }
 
-  useEffect(() => {
+  const totalJobs = jobs.length;
 
-    load()
+  const activeJobs = jobs.filter(
+    (job) => job.status === "active"
+  ).length;
 
-    const channel =
-      supabase
-        .channel("live-products")
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "product_metrics"
-          },
-          () => load()
-        )
-        .subscribe()
+  const completedJobs = jobs.filter(
+    (job) => job.status === "completed"
+  ).length;
 
-    return () =>
-      supabase.removeChannel(channel)
-
-  }, [])
+  const failedJobs = jobs.filter(
+    (job) => job.status === "failed"
+  ).length;
 
   return (
-    <div style={{ padding: 20 }}>
+    <div className="flex min-h-screen bg-black text-white">
+      <Sidebar />
 
-      <h1>🔥 Winning Products SaaS</h1>
+      <main className="flex-1 p-6">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold">
+            ConvertLister Dashboard
+          </h1>
 
-      {items.map((p, i) => (
-
-        <div key={i}
-          style={{
-            padding: 10,
-            border: "1px solid #ddd",
-            marginBottom: 10
-          }}
-        >
-
-          <h3>{p.title}</h3>
-
-          <p>💰 ${p.price}</p>
-          <p>⭐ {p.rating}</p>
-          <p>📊 {p.reviews_count}</p>
-
-          <p>
-            🏆 SCORE: {p.winning_score}
+          <p className="text-zinc-400 mt-2">
+            Autonomous product intelligence system
           </p>
-
         </div>
 
-      ))}
+        <StatsCards
+          totalJobs={totalJobs}
+          activeJobs={activeJobs}
+          completedJobs={completedJobs}
+          failedJobs={failedJobs}
+        />
 
+        <div className="mt-8">
+          <JobsTable jobs={jobs} />
+        </div>
+      </main>
     </div>
-  )
+  );
 }
