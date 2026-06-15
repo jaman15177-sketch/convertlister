@@ -1,28 +1,65 @@
-import { authService } from "./service";
+import { supabase } from "./supabase";
 
+/**
+ * REGISTER USER
+ */
 export const register = async (req: any, res: any) => {
   try {
-    const result = await authService.register(req.body.email, req.body.password);
-    res.json(result);
+    const { email, password } = req.body;
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) throw error;
+
+    return res.json({
+      success: true,
+      user: data.user,
+    });
   } catch (e: any) {
-    res.status(400).json({ error: e.message });
+    return res.status(400).json({
+      success: false,
+      error: e.message,
+    });
   }
 };
 
+/**
+ * LOGIN USER
+ */
 export const login = async (req: any, res: any) => {
   try {
-    const result = await authService.login(req.body.email, req.body.password);
-    res.json(result);
+    const { email, password } = req.body;
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) throw error;
+
+    return res.json({
+      success: true,
+      session: data.session,
+      user: data.user,
+    });
   } catch (e: any) {
-    res.status(400).json({ error: e.message });
+    return res.status(400).json({
+      success: false,
+      error: e.message,
+    });
   }
 };
 
-export const refresh = async (req: any, res: any) => {
-  try {
-    const result = await authService.refresh(req.body.refreshToken);
-    res.json(result);
-  } catch (e: any) {
-    res.status(400).json({ error: e.message });
-  }
+/**
+ * LOGOUT USER
+ */
+export const logout = async (_req: any, res: any) => {
+  await supabase.auth.signOut();
+
+  return res.json({
+    success: true,
+  });
 };

@@ -1,4 +1,3 @@
-// ws-gateway.ts
 import { WebSocketServer, WebSocket } from "ws";
 import http from "http";
 import { RedisEventBus, ClusterEvent } from "../bus/redis-bus";
@@ -33,13 +32,23 @@ export class RealtimeGateway {
         const data = JSON.parse(msg.toString());
 
         if (data.type === "SUBSCRIBE") {
-          tenantId = data.tenantId;
+          const incomingTenantId = data.tenantId;
 
-          if (!this.clients.has(tenantId)) {
-            this.clients.set(tenantId, []);
+          if (typeof incomingTenantId !== "string" || !incomingTenantId) {
+            ws.close();
+            return;
           }
 
-          this.clients.get(tenantId)!.push(ws);
+          tenantId = incomingTenantId;
+
+          let clients = this.clients.get(tenantId);
+
+          if (!clients) {
+            clients = [];
+            this.clients.set(tenantId, clients);
+          }
+
+          clients.push(ws);
 
           ws.send(
             JSON.stringify({
@@ -54,6 +63,7 @@ export class RealtimeGateway {
         if (!tenantId) return;
 
         const list = this.clients.get(tenantId) || [];
+
         this.clients.set(
           tenantId,
           list.filter((c) => c !== ws)

@@ -1,4 +1,6 @@
-export default function RootLayout({
+import { bootstrap } from "@/lib/bootstrap";
+
+bootstrap();export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;

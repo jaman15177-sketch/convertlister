@@ -1,53 +1,31 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": false,
-    "noEmit": true,
+    "target": "ES2020",
+    "module": "CommonJS",
+
+    "moduleResolution": "node",
+    "rootDir": ".",
+    "outDir": "dist",
+
+    "strict": true,
     "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
     "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "react-jsx",
-    "incremental": true,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "./*"
-      ]
-    },
+
+    "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "types": [
-      "node"
-    ],
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ]
+
+    "types": ["node"],
+
+    "noImplicitAny": true,
+    "removeComments": true
   },
+
   "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    ".next/dev/types/**/*.ts"
+    "src/**/*.ts"
   ],
+
   "exclude": [
     "node_modules",
-    ".next",
-    "dist",
-    "scripts",
-    "**/*.test.*",
-    "**/test-*.*",
-    "**/tests/**",
-    "full-system-test.*"
+    "dist"
   ]
 }

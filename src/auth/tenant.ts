@@ -1,19 +1,17 @@
-import { NextRequest, NextResponse } from "next/server";
+import { TenantContext } from "../types/tenant";
 
-export function tenantGuard(req: NextRequest) {
-  const tenantId = req.headers.get("x-tenant-id");
+export function resolveTenant(req: any): TenantContext {
+  const tenantId =
+    req.headers["x-tenant-id"] ||
+    req.headers["X-Tenant-Id"];
 
   if (!tenantId) {
-    return new NextResponse("Missing tenant", { status: 400 });
+    throw new Error("TENANT_ID_MISSING");
   }
 
-  // attach tenant context (optional)
-  const requestHeaders = new Headers(req.headers);
-  requestHeaders.set("x-tenant-id", tenantId);
-
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  return {
+    tenantId: String(tenantId),
+    userId: req.user?.id || "anonymous",
+    role: req.user?.role || "member",
+  };
 }

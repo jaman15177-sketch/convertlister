@@ -1,67 +1,59 @@
 import { createClient } from '@supabase/supabase-js'
-import { calculateHealthScore } from '@/lib/score'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
 export async function POST(req: Request) {
   try {
-    const { product_id } = await req.json()
+    const body = await req.json()
+    const { product } = body
 
-    if (!product_id) {
+    if (!product?.id) {
       return Response.json(
-        { error: 'product_id missing' },
+        { error: "Invalid product" },
         { status: 400 }
       )
     }
 
-    const { data: product, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('id', product_id)
-      .single()
+    // =========================
+    // SIMPLIFIED SCORING LOGIC (NO EXTERNAL FUNCTION)
+    // =========================
+    const score =
+      (product.price || 0) > 100 ? 80 : 50
 
-    if (error || !product) {
-      return Response.json(
-        { error: 'Product not found' },
-        { status: 404 }
-      )
-    }
+    const status =
+      score > 70 ? 'active' : 'review'
 
-    const score = calculateHealthScore(product)
-
-    let status = 'active'
-
-    if (score >= 80) status = 'winner'
-    else if (score >= 50) status = 'needs_optimization'
-    else status = 'risk'
-
-    const { error: updateError } = await supabase
+    // =========================
+    // UPDATE DB
+    // =========================
+    const { error } = await supabase
       .from('products')
       .update({
-        health_score: score,
+        score,
         status,
       })
-      .eq('id', product_id)
+      .eq('id', product.id)
 
-    if (updateError) {
+    if (error) {
       return Response.json(
-        { error: updateError.message },
+        { error: error.message },
         { status: 500 }
       )
     }
 
     return Response.json({
       success: true,
-      product_id,
-      health_score: score,
+      score,
       status,
     })
-  } catch (err: any) {
+  } catch (error: any) {
     return Response.json(
-      { error: err.message || 'Server error' },
+      {
+        error: error?.message || "Score update failed",
+      },
       { status: 500 }
     )
   }
