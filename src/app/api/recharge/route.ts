@@ -1,195 +1,172 @@
-import { supabaseAdmin } from "@/lib/server/supabase-admin";
-import { redis } from "@/lib/server/redis";import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-import { supabase } from "@/lib/supabase";
-import { getUser } from "@/lib/auth";
-import { detectFraud } from "@/lib/fraud";
+import {
+  getCurrentUser,
+  UnauthorizedError,
+  BadRequestError,
+  ForbiddenError,
+} from "@/lib/auth/get-current-user";
+
 import { isUserBanned } from "@/lib/ban";
 import { rateLimit } from "@/lib/rate-limit";
+import { detectFraud } from "@/lib/fraud";
 import { logAudit } from "@/lib/audit";
+
+interface RechargeBody {
+  trx_id: string;
+  amount?: number;
+  sender_number?: string;
+}
 
 export async function POST(req: Request) {
   try {
-    // =========================
-    // AUTH USER
-    // =========================
+    const user = await getCurrentUser(req);
 
-    const user = await getUser(req);
-
-    if (!user) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Unauthorized",
-        },
-        { status: 401 }
-      );
-    }
-
-    // =========================
-    // BAN CHECK
-    // =========================
+    await rateLimit(`recharge:${user.id}`, 10, 60);
 
     const banned = await isUserBanned(user.id);
 
     if (banned) {
+      await logAudit({
+        actorId: user.id,
+        organizationId: user.organizationId,
+        entityType: "recharge",
+        action: "RECHARGE_BLOCKED_BANNED_USER",
+        metadata: {},
+      });
+
       return NextResponse.json(
         {
           success: false,
-          error: "Account suspended",
+          error: "USER_BANNED",
         },
-        { status: 403 }
+        {
+          status: 403,
+        }
       );
     }
 
-    // =========================
-    // RATE LIMIT
-    // =========================
+    const body = (await req.json()) as RechargeBody;
 
-    const allowed = rateLimit(user.id, 5, 60000);
-
-    if (!allowed) {
+    if (!body.trx_id?.trim()) {
       return NextResponse.json(
         {
           success: false,
-          error: "Too many requests",
+          error: "TRX_ID_REQUIRED",
         },
-        { status: 429 }
-      );
-    }
-
-    // =========================
-    // BODY
-    // =========================
-
-    const body = await req.json();
-
-    const {
-      amount,
-      credits,
-      trx_id,
-      sender_number,
-    } = body;
-
-    // =========================
-    // VALIDATION
-    // =========================
-
-    if (
-      !amount ||
-      !credits ||
-      !trx_id ||
-      !sender_number
-    ) {
-      return NextResponse.json(
         {
-          success: false,
-          error: "Missing required fields",
-        },
-        { status: 400 }
+          status: 400,
+        }
       );
     }
-
-    if (amount <= 0 || credits <= 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Invalid amount or credits",
-        },
-        { status: 400 }
-      );
-    }
-
-    // =========================
-    // FRAUD DETECTION
-    // =========================
 
     const fraud = await detectFraud({
       userId: user.id,
-      trx_id,
-      amount,
-      sender_number,
+      trx_id: body.trx_id,
+      amount: body.amount,
+      sender_number: body.sender_number,
     });
 
-    if (fraud.blocked) {
-      await logAudit(
-        user.id,
-        "FRAUD_BLOCKED_PAYMENT",
-        {
-          trx_id,
-          amount,
-          sender_number,
+    if (fraud.flagged && fraud.blocked) {
+      await logAudit({
+        actorId: user.id,
+        organizationId: user.organizationId,
+        entityType: "recharge",
+        action: "RECHARGE_BLOCKED_FRAUD",
+        metadata: {
           reason: fraud.reason,
-        }
-      );
-
-      return NextResponse.json(
-        {
-          success: false,
-          error: fraud.reason,
+          trx_id: body.trx_id,
         },
-        { status: 400 }
-      );
-    }
-
-    // =========================
-    // INSERT PAYMENT REQUEST
-    // =========================
-
-    const { error } = await supabase
-      .from("payment_requests")
-      .insert({
-        user_id: user.id,
-        amount,
-        credits,
-        trx_id,
-        sender_number,
-        status: "pending",
-        verified: false,
       });
 
-    if (error) {
       return NextResponse.json(
         {
           success: false,
-          error: error.message,
+          error: fraud.reason ?? "FRAUD_DETECTED",
         },
-        { status: 500 }
+        {
+          status: 403,
+        }
       );
     }
 
-    // =========================
-    // AUDIT LOG
-    // =========================
-
-    await logAudit(
-      user.id,
-      "PAYMENT_REQUEST_CREATED",
-      {
-        amount,
-        credits,
-        trx_id,
-        sender_number,
-      }
-    );
-
-    // =========================
-    // SUCCESS
-    // =========================
+    await logAudit({
+      actorId: user.id,
+      organizationId: user.organizationId,
+      entityType: "recharge",
+      action: "RECHARGE_REQUEST_CREATED",
+      metadata: {
+        trx_id: body.trx_id,
+        amount: body.amount,
+      },
+    });
 
     return NextResponse.json({
       success: true,
-      message:
-        "Recharge request submitted successfully",
+      fraudFlagged: fraud.flagged,
+      fraudReason: fraud.reason ?? null,
     });
-  } catch (err: any) {
+
+  } catch (err: unknown) {
+
+    if (err instanceof UnauthorizedError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: err.message,
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    if (err instanceof BadRequestError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: err.message,
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (err instanceof ForbiddenError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: err.message,
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    if (err instanceof SyntaxError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "INVALID_JSON",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    console.error("Recharge API Error:", err);
+
     return NextResponse.json(
       {
         success: false,
-        error:
-          err.message || "Internal server error",
+        error: "INTERNAL_SERVER_ERROR",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }

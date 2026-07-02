@@ -1,30 +1,25 @@
-import { WebSocketServer } from "ws";
-import { eventBus } from "../bus/event-bus";
+import type { WebSocketServer } from "ws";
+import { eventBus } from "../ws/ws-bus";
 
 let wss: WebSocketServer;
 
-export function initWebSocket(server: any) {
-  wss = new WebSocketServer({ server });
+/**
+ * Attach WebSocket server to event bus
+ */
+export function initWS(server: WebSocketServer) {
+  wss = server;
 
-  wss.on("connection", (ws) => {
-    ws.send(JSON.stringify({ type: "connected" }));
-  });
-
-  eventBus.on("alert.created", (data) => {
-    broadcast({ type: "alert.created", data });
-  });
-
-  eventBus.on("alert.updated", (data) => {
-    broadcast({ type: "alert.updated", data });
+  eventBus.onEvent("event", (payload) => {
+    broadcast(JSON.stringify(payload));
   });
 }
 
-function broadcast(payload: any) {
+function broadcast(message: string) {
   if (!wss) return;
 
   wss.clients.forEach((client) => {
     if (client.readyState === 1) {
-      client.send(JSON.stringify(payload));
+      client.send(message);
     }
   });
 }

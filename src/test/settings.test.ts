@@ -1,5 +1,4 @@
 import { settingsStore } from "../core/platform/settings";
-
 async function runSettingsTest() {
   console.log("🧪 SETTINGS SYSTEM TEST START");
 

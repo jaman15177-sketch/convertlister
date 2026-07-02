@@ -1,0 +1,51 @@
+{
+  "system": {
+    "name": "SOC Security OS",
+    "version": "1.0.0",
+    "mode": "production",
+    "refresh_interval_ms": 5000
+  },
+  "metrics": {
+    "attack_risk_score": {
+      "source": "prometheus",
+      "query": "avg(attack_risk_score)",
+      "thresholds": {
+        "low": 30,
+        "medium": 60,
+        "high": 85,
+        "critical": 95
+      }
+    },
+    "tenant_anomalies": {
+      "source": "audit_stream",
+      "query": "sum(anomalies_detected)"
+    }
+  },
+  "alerts": {
+    "enabled": true,
+    "channels": ["websocket", "audit_log", "webhook"],
+    "rules": {
+      "fraud_detected": "risk_score > 90",
+      "tenant_violation": "cross_tenant_attempt == true",
+      "system_attack": "request_rate > 1000"
+    }
+  },
+  "ui": {
+    "theme": "dark",
+    "layout": "grid",
+    "panels": [
+      {
+        "type": "graph",
+        "title": "Attack Risk Score"
+      },
+      {
+        "type": "heatmap",
+        "title": "Tenant Risk Map"
+      },
+      {
+        "type": "logs",
+        "title": "Real-time Security Events"
+      }
+    ]
+  }
+}

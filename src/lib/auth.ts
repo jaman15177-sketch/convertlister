@@ -1,18 +1,26 @@
 import { supabase } from "./supabase";
 
-/**
- * Get user from request token
- */
-export async function getUser(req: Request) {
-  const authHeader = req.headers.get("authorization");
+export type AuthUser = {
+  id: string;
+  email?: string;
+};
 
+/**
+ * Secure server-side auth extraction
+ */
+export async function getUser(req: Request): Promise<AuthUser | null> {
+  const authHeader = req.headers.get("authorization");
   if (!authHeader) return null;
 
-  const token = authHeader.replace("Bearer ", "");
+  const token = authHeader.replace("Bearer ", "").trim();
+  if (!token) return null;
 
   const { data, error } = await supabase.auth.getUser(token);
 
-  if (error || !data.user) return null;
+  if (error || !data?.user) return null;
 
-  return data.user;
+  return {
+    id: data.user.id,
+    email: data.user.email,
+  };
 }

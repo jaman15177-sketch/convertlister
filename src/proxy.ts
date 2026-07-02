@@ -1,42 +1,20 @@
-// src/proxy.ts
-
-export type GatewayContext = {
-  requestId: string;
-  user: {
-    id: string;
-  } | null;
-  orgId: string | null;
-};
-
-export async function proxy({
-  req,
-}: {
-  req: Request;
-}): Promise<GatewayContext> {
-  // =========================
-  // REQUEST ID
-  // =========================
+import { NextRequest, NextResponse } from "next/server";export function proxy(req: NextRequest) {
   const requestId = crypto.randomUUID();
+  const start = Date.now();
 
-  // =========================
-  // AUTH (TEMP STUB)
-  // Replace later with real authGuard
-  // =========================
-  const user = {
-    id: "mock-user-id",
-  };
+  const headers = new Headers(req.headers);
+  headers.set("x-request-id", requestId);
+  headers.set("x-start-time", String(start));
 
-  // =========================
-  // ORG RESOLUTION (TEMP STUB)
-  // =========================
-  const orgId = "mock-org-id";
+  const response = NextResponse.next({
+    request: { headers },
+  });
 
-  // =========================
-  // RETURN CONTEXT
-  // =========================
-  return {
-    requestId,
-    user,
-    orgId,
-  };
+  response.headers.set("x-request-id", requestId);
+  response.headers.set(
+    "x-response-time",
+    String(Date.now() - start)
+  );
+
+  return response;
 }

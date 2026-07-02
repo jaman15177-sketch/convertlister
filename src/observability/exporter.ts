@@ -1,7 +1,11 @@
-import { metrics } from "./metrics";
+import { getMetrics } from "./metrics";
 
-export function exportMetrics() {
-  return Object.entries(metrics.all())
-    .map(([k, v]) => `${k} ${v.value}`)
-    .join("\n");
+/**
+ * ==========================================================
+ * METRICS EXPORTER
+ * ==========================================================
+ */
+
+export async function exportMetrics(): Promise<string> {
+  return await getMetrics();
 }

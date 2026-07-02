@@ -1,5 +1,4 @@
-import { queueClient } from "../lib/queue/queue.client";
-
+import { queueClient } from "@/lib/queue/queue.client";
 async function runTest() {
   console.log("🧪 QUEUE TEST START");
 

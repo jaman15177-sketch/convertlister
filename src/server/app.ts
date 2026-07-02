@@ -1,4 +1,4 @@
-import { createServer, IncomingMessage, ServerResponse } from "http";
+import type { createServer, IncomingMessage, ServerResponse } from "http";
 
 /**
  * Minimal HTTP app layer

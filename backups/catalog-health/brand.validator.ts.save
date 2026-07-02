@@ -1,0 +1,173 @@
+import { BaseValidator } from "../base/base-validator";
+import type { AdapterProduct } from "@/adapters/core/adapter.contract";
+import type { HealthCategory, HealthSeverity } from "../health.types";
+import type {
+  ValidatorInput,
+  ValidatorResult,
+} from "../base/validator.types";
+/**
+ * ============================================================
+ * CONVERTLISTER — BRAND VALIDATOR
+ * ENTERPRISE BRAND AUTHENTICITY + TRUST + MARKETPLACE ENGINE
+ * ============================================================
+ */
+
+export class BrandValidator extends BaseValidator {
+  public readonly category: HealthCategory = "BRAND";
+
+  /**
+   * MAIN VALIDATION PIPELINE
+   */
+  async validate(
+  input: ValidatorInput
+): Promise<ValidatorResult> {
+
+  const product = input.product;
+
+  const result = this.emptyResult();
+    // =========================
+    // STEP 1 — Extract brand
+    // =========================
+    const brand = String(
+      product.metadata?.brand ?? ""
+    )
+      .trim()
+      .toLowerCase();
+
+    // =========================
+    // STEP 2 — Existence validation
+    // =========================
+    if (!brand) {
+      result.issues.push(
+  result.issues.push(
+  this.warning(
+    "BRAND_TOO_SHORT",
+    "Brand name too short",
+    "Use a proper recognizable brand name"
+  )
+);      // brand missing = trust p      result.score = this.deductScore(result.score, 20);  }
+
+    // =========================
+    // STEP 3 — Brand length validation
+    // =========================
+    if (brand && brand.length < 2) {
+      result.issues.push(
+  this.warning);  "WARNING",
+        "BRAND_TOO_SHORT",
+        "Brand name too short",
+        "Use a proper recognizable brand name"
+      ));
+
+      result.score = this.bonusScore(result.score, 10);
+    }
+
+    if (brand && brand.length > 40) {
+      this.addIssue(
+        result,
+        "WARNING",
+        "BRAND_TOO_LONG",
+        "Brand name too long",
+        "Use standardized brand naming"
+      );
+
+      this.deductScore(result, 10);
+    }
+
+    // =========================
+    // STEP 4 — Spam / fake brand detection
+    // =========================
+    const spamPatterns = [
+      "cheap",
+      "best deal",
+      "100% profit",
+      "official store",
+      "hot sale",
+      "limited offer",
+    ];
+
+    const isSpamBrand = spamPatterns.some((p) =>
+      brand.includes(p)
+    );
+
+    if (isSpamBrand) {
+        result.issues.push(
+  this.warning(  "CRITICAL",
+        "BRAND_SPAM_DETECTED",
+        "Suspicious or spam-like brand name",
+        "Use authentic brand identity only"
+      );
+
+      this.deductScore(result, 40);
+    }
+
+    // =========================
+    // STEP 5 — Marketplace brand compliance
+    // =========================
+    const marketplace =
+      product.metadata?.marketplace || "generic";
+
+    const amazonTrustedBrands = [
+      "apple",
+      "samsung",
+      "sony",
+      "nike",
+      "adidas",
+      "lenovo",
+    ];
+
+    if (marketplace === "amazon") {
+      if (!brand) {
+        this.deductScore(result, 15);
+      }
+
+      if (brand && !amazonTrustedBrands.includes(brand)) {
+      result.issues.push(
+  this.warning(  "INFO",
+          "AMAZON_BRAND_UNKNOWN",
+          "Brand not recognized in Amazon trust index",
+          "Ensure brand legitimacy for better conversion"
+        ));
+
+        this.deductScore(result, 10);
+      }
+    }
+
+    // =========================
+    // STEP 6 — SEO + CTR signal check
+    // =========================
+    if (brand && brand.includes("official")) {
+      result.issues.push(
+  this.warning(  "INFO",
+        "OVER_OPTIMIZED_BRAND",
+        "Over-optimized brand keyword detected",
+        "Avoid SEO keyword stuffing in brand field"
+      ));
+
+      this.deductScore(result, 5);
+    }
+
+    // =========================
+    // STEP 7 — Trust boost engine
+    // =========================
+    if (brand && brand.length >= 3 && brand.length <= 20) {
+      this.addScore(result, 10);
+    }
+
+    // strong known brands boost trust
+    if (brand && amazonTrustedBrands.includes(brand)) {
+      this.addScore(result, 15);
+    }
+
+    // =========================
+    // STEP 8 — Final scoring
+    // =========================
+    result.score = this.clampScore(result.score);
+
+    return result;
+  }
+}
+
+/**
+ * SINGLETON EXPORT
+ */
+export const brandValidator = new BrandValidator();

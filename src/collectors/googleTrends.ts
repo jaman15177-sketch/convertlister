@@ -1,6 +1,6 @@
 // src/collectors/googleTrends.ts
 
-import { Signal } from "../types/signal";
+import type { Signal } from "../types/signal";
 
 /**
  * 🔥 Google Trends MOCK COLLECTOR

@@ -1,8 +1,6 @@
-import { importQueue } from "../lib/queue/bull.queue";
-import "../lib/queue/worker";
+import { importQueue } from "@/lib/queue/bull.queue";import "@/lib/queue/worker";
 import { productStore } from "../core/platform/store";
-import { dlq } from "../lib/queue/dlq";
-
+import { dlq } from "@/lib/queue/dlq";
 async function runTest() {
   console.log("🚀 IMPORT QUEUE E2E TEST START");
 

@@ -1,31 +1,25 @@
-import { supabase } from "./supabase";
+import { supabase } from "@/lib/supabase";import type { User } from "@supabase/supabase-js";
 
 /**
  * Extracts user from Authorization header (Supabase session)
- * SAFE: no JWT, no custom token logic
+ * SAFE: no JWT custom parsing
  */
-export async function getUser(req: Request) {
+export async function getUser(req: Request): Promise<User | null> {
   try {
     const authHeader = req.headers.get("authorization");
 
-    if (!authHeader) {
-      return null;
-    }
+    if (!authHeader) return null;
 
     const token = authHeader.replace("Bearer ", "");
 
-    if (!token) {
-      return null;
-    }
+    if (!token) return null;
 
     const { data, error } = await supabase.auth.getUser(token);
 
-    if (error || !data?.user) {
-      return null;
-    }
+    if (error || !data?.user) return null;
 
     return data.user;
-  } catch (err) {
+  } catch {
     return null;
   }
 }
@@ -33,7 +27,7 @@ export async function getUser(req: Request) {
 /**
  * STRICT GUARD (use in APIs)
  */
-export async function requireUser(req: Request) {
+export async function requireUser(req: Request): Promise<User> {
   const user = await getUser(req);
 
   if (!user) {
@@ -44,9 +38,8 @@ export async function requireUser(req: Request) {
 }
 
 /**
- * OPTIONAL: admin check (simple role-based)
- * later can connect to DB roles table
+ * ROLE CHECK (typed)
  */
-export function isAdmin(user: any) {
+export function isAdmin(user: User | null | undefined): boolean {
   return user?.email === "admin@example.com";
 }

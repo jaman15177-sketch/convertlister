@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { GatewayContext } from "./types";
+import type { GatewayContext } from "./types";
 
 export async function createGatewayContext(): Promise<GatewayContext> {
   return {

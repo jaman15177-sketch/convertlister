@@ -1,3 +1,5 @@
+import { deductCredit } from "./deduct-credit";
+
 export async function spendCredits(
   userId?: string,
   amount?: number
@@ -6,11 +8,5 @@ export async function spendCredits(
     throw new Error("Missing userId or amount");
   }
 
-  // MOCK SAFE IMPLEMENTATION (replace with DB later)
-  return {
-    success: true,
-    userId,
-    spent: amount,
-    remaining: 100 - amount,
-  };
+  return deductCredit(userId, amount);
 }

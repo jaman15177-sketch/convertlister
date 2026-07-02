@@ -1,43 +1,22 @@
-import { Redis } from "ioredis";
+import { Redis } from "@upstash/redis";
 
-/**
- * 🧠 Singleton Redis client (BullMQ / cache / queue)
- * Prevents multiple connections in dev + serverless issues
- */
+let redisInstance: Redis | null = null;
 
-const REDIS_URL = process.env.REDIS_URL;
+export function getRedis() {
+  if (!redisInstance) {
+    const url = process.env.UPSTASH_REDIS_REST_URL;
+    const token = process.env.UPSTASH_REDIS_REST_TOKEN;
 
-if (!REDIS_URL) {
-  throw new Error("❌ REDIS_URL is missing in environment variables");
+    if (!url || !token) {
+      console.log("⚠️ Redis NOT configured");
+      return null;
+    }
+
+    redisInstance = new Redis({
+      url,
+      token,
+    });
+  }
+
+  return redisInstance;
 }
-
-declare global {
-  // eslint-disable-next-line no-var
-  var _redis: Redis | undefined;
-}
-
-/**
- * Reuse connection in dev to avoid multiple instances
- */
-export const redis =
-  global._redis ||
-  new Redis(REDIS_URL, {
-    maxRetriesPerRequest: null,
-    enableReadyCheck: true,
-    lazyConnect: false,
-  });
-
-if (process.env.NODE_ENV !== "production") {
-  global._redis = redis;
-}
-
-/**
- * Optional logging (safe for debugging)
- */
-redis.on("connect", () => {
-  console.log("🟢 Redis connected");
-});
-
-redis.on("error", (err) => {
-  console.error("🔴 Redis error:", err.message);
-});

@@ -1,19 +1,13 @@
-import { WebSocketServer } from "ws";
+import { EventEmitter } from "events";
 
-let wss: WebSocketServer;
+class WSBus extends EventEmitter {
+  emitEvent(event: string, payload: any) {
+    this.emit(event, payload);
+  }
 
-export function initWS(server: any) {
-  wss = new WebSocketServer({ server });
+  onEvent(event: string, handler: (payload: any) => void) {
+    this.on(event, handler);
+  }
 }
 
-export function broadcast(event: string, data: any) {
-  if (!wss) return;
-
-  const payload = JSON.stringify({ event, data });
-
-  wss.clients.forEach((client) => {
-    if (client.readyState === 1) {
-      client.send(payload);
-    }
-  });
-}
+export const eventBus = new WSBus();

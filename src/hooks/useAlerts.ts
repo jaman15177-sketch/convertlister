@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
+import { useState, useEffect } from "react";
 export function useAlerts() {
   const [alerts, setAlerts] = useState<any[]>([]);
 

@@ -1,6 +1,4 @@
-import { spendWallet } from "./wallet/credits";
-
-/**
+import { spendWallet } from "./wallet/credits";/**
  * Simple wrapper around wallet system
  * - alias-free (server-safe)
  * - no type coupling issues

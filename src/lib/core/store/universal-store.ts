@@ -1,21 +1,33 @@
-class UniversalStore {
-  private store = new Map<string, any>();
+export class UniversalStore {
+  private store = new Map<string, unknown>();
 
-  set(key: string, value: any) {
+  set(key: string, value: unknown): void {
     this.store.set(key, value);
   }
 
-  get(key: string) {
-    return this.store.get(key);
+  get<T = unknown>(key: string): T | undefined {
+    return this.store.get(key) as T | undefined;
   }
 
-  delete(key: string) {
-    this.store.delete(key);
+  has(key: string): boolean {
+    return this.store.has(key);
   }
 
-  clear() {
+  delete(key: string): boolean {
+    return this.store.delete(key);
+  }
+
+  clear(): void {
     this.store.clear();
+  }
+
+  keys(): string[] {
+    return [...this.store.keys()];
+  }
+
+  values(): unknown[] {
+    return [...this.store.values()];
   }
 }
 
-export const globalStore = new UniversalStore();
+export const universalStore = new UniversalStore();

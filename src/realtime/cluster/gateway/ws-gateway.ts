@@ -1,89 +1,155 @@
-import { WebSocketServer, WebSocket } from "ws";
 import http from "http";
-import { RedisEventBus, ClusterEvent } from "../bus/redis-bus";
+import { WebSocketServer, WebSocket } from "ws";
+import { createClient } from "@supabase/supabase-js";
 
-type ClientMap = Map<string, WebSocket[]>;
+/**
+ * =========================================
+ * REALTIME GATEWAY (SUPABASE AUTH ONLY)
+ * =========================================
+ */
+
+type ClientMeta = {
+  socket: WebSocket;
+  userId: string;
+  organizationId: string;
+};
+
+type TenantMap = Map<string, Set<ClientMeta>>;
 
 export class RealtimeGateway {
   private wss: WebSocketServer;
-  private clients: ClientMap = new Map();
-  private bus = new RedisEventBus();
+  private clients: TenantMap = new Map();
 
-  constructor(port: number, redisChannel = "saas-events") {
-    const server = http.createServer();
+  private supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  constructor(server: http.Server) {
     this.wss = new WebSocketServer({ server });
+    this.init();
+  }
 
-    server.listen(port);
-
-    /**
-     * Listen Redis events (cluster-wide)
-     */
-    this.bus.subscribe(redisChannel, (event) => {
-      this.broadcast(event.tenantId, event);
-    });
-
-    /**
-     * WebSocket connections
-     */
-    this.wss.on("connection", (ws) => {
-      let tenantId: string | null = null;
-
-      ws.on("message", (msg) => {
-        const data = JSON.parse(msg.toString());
-
-        if (data.type === "SUBSCRIBE") {
-          const incomingTenantId = data.tenantId;
-
-          if (typeof incomingTenantId !== "string" || !incomingTenantId) {
-            ws.close();
-            return;
-          }
-
-          tenantId = incomingTenantId;
-
-          let clients = this.clients.get(tenantId);
-
-          if (!clients) {
-            clients = [];
-            this.clients.set(tenantId, clients);
-          }
-
-          clients.push(ws);
-
-          ws.send(
-            JSON.stringify({
-              type: "CONNECTED",
-              tenantId,
-            })
-          );
-        }
-      });
-
-      ws.on("close", () => {
-        if (!tenantId) return;
-
-        const list = this.clients.get(tenantId) || [];
-
-        this.clients.set(
-          tenantId,
-          list.filter((c) => c !== ws)
-        );
-      });
+  private init() {
+    this.wss.on("connection", (socket, req) => {
+      this.handleConnection(socket, req);
     });
   }
 
-  broadcast(tenantId: string, event: ClusterEvent) {
-    const clients = this.clients.get(tenantId) || [];
+  /**
+   * EXTRACT TOKEN
+   */
+  private extractToken(req: http.IncomingMessage): string | null {
+    const url = new URL(req.url || "", "http://localhost");
 
-    for (const ws of clients) {
-      if (ws.readyState === ws.OPEN) {
-        ws.send(
-          JSON.stringify({
-            type: "UPDATE",
-            tenantId,
-            event,
-          })
-        );
+    const queryToken = url.searchParams.get("token");
+    if (queryToken) return queryToken;
+
+    const auth = req.headers["authorization"];
+    if (!auth) return null;
+
+    if (auth.startsWith("Bearer ")) {
+      return auth.replace("Bearer ", "");
+    }
+
+    return null;
+  }
+
+  /**
+   * VERIFY USING SUPABASE
+   */
+  private async verifyToken(token: string) {
+    const { data, error } = await this.supabase.auth.getUser(token);
+
+    if (error || !data.user) return null;
+
+    return data.user;
+  }
+
+  /**
+   * HANDLE CONNECTION
+   */
+  private async handleConnection(
+    socket: WebSocket,
+    req: http.IncomingMessage
+  ) {
+    const token = this.extractToken(req);
+
+    if (!token) {
+      socket.close(1008, "Missing token");
+      return;
+    }
+
+    const user = await this.verifyToken(token);
+
+    if (!user) {
+      socket.close(1008, "Invalid token");
+      return;
+    }
+
+    const metadata = user.user_metadata || {};
+
+    const client: ClientMeta = {
+      socket,
+      userId: user.id,
+      organizationId: metadata.organizationId || "unknown",
+    };
+
+    this.addClient(client);
+
+    socket.on("message", (msg) => {
+      this.handleMessage(client, msg.toString());
+    });
+
+    socket.on("close", () => {
+      this.removeClient(client);
+    });
+  }
+
+  private addClient(client: ClientMeta) {
+    if (!this.clients.has(client.organizationId)) {
+      this.clients.set(client.organizationId, new Set());
+    }
+
+    this.clients.get(client.organizationId)!.add(client);
+  }
+
+  private removeClient(client: ClientMeta) {
+    const set = this.clients.get(client.organizationId);
+    if (!set) return;
+
+    set.delete(client);
+
+    if (set.size === 0) {
+      this.clients.delete(client.organizationId);
+    }
+  }
+
+  private handleMessage(client: ClientMeta, raw: string) {
+    try {
+      const event = JSON.parse(raw);
+
+      this.broadcast(client.organizationId, {
+        type: event.type || "UNKNOWN",
+        payload: event.payload,
+        organizationId: client.organizationId,
+        userId: client.userId,
+        timestamp: Date.now(),
+      });
+    } catch {
+      // ignore invalid payload
+    }
+  }
+
+  public broadcast(organizationId: string, event: unknown) {
+    const clients = this.clients.get(organizationId);
+    if (!clients) return;
+
+    const data = JSON.stringify(event);
+
+    for (const client of clients) {
+      if (client.socket.readyState === WebSocket.OPEN) {
+        client.socket.send(data);
       }
     }
   }

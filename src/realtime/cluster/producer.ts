@@ -2,7 +2,7 @@ console.log("🚀 Producer started...");
 
 setInterval(() => {
   const event = {
-    tenantId: "tenant_1",
+    organizationId: "tenant_1",
     type: "ADS_METRICS",
     payload: {
       roas: Number((Math.random() * 3).toFixed(2)),

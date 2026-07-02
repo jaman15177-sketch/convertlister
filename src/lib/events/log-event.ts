@@ -1,4 +1,11 @@
-type Listener = (log: any) => Promise<void>;
+type Log = {
+  level?: string;
+  message?: string;
+  timestamp?: number;
+  [key: string]: any;
+};
+
+type Listener = (log: Log) => Promise<void>;
 
 class LogEventBus {
   private listeners: Listener[] = [];
@@ -7,7 +14,7 @@ class LogEventBus {
     this.listeners.push(fn);
   }
 
-  async emit(log: any) {
+  async emit(log: Log) {
     await Promise.all(this.listeners.map((fn) => fn(log)));
   }
 }

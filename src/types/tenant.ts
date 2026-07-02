@@ -1,5 +1,4 @@
-export interface TenantContext {
-  tenantId: string;
+export type TenantContext = {
+  organizationId: string;
   userId: string;
-  role?: string;
-}
+};

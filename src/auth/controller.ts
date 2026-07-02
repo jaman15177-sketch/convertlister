@@ -1,65 +1,28 @@
-import { supabase } from "./supabase";
-
-/**
- * REGISTER USER
- */
-export const register = async (req: any, res: any) => {
+import { NextResponse } from "next/server";
+export const register = async (req: Request) => {
   try {
-    const { email, password } = req.body;
+    const body = await req.json();
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
+    const { email, password } = body;
 
-    if (error) throw error;
+    if (!email || !password) {
+      return NextResponse.json(
+        { success: false, error: "Missing fields" },
+        { status: 400 }
+      );
+    }
 
-    return res.json({
+    return NextResponse.json({
       success: true,
-      user: data.user,
+      message: "User registered",
     });
-  } catch (e: any) {
-    return res.status(400).json({
-      success: false,
-      error: e.message,
-    });
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error ? err.message : "Internal server error";
+
+    return NextResponse.json(
+      { success: false, error: message },
+      { status: 500 }
+    );
   }
-};
-
-/**
- * LOGIN USER
- */
-export const login = async (req: any, res: any) => {
-  try {
-    const { email, password } = req.body;
-
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) throw error;
-
-    return res.json({
-      success: true,
-      session: data.session,
-      user: data.user,
-    });
-  } catch (e: any) {
-    return res.status(400).json({
-      success: false,
-      error: e.message,
-    });
-  }
-};
-
-/**
- * LOGOUT USER
- */
-export const logout = async (_req: any, res: any) => {
-  await supabase.auth.signOut();
-
-  return res.json({
-    success: true,
-  });
 };

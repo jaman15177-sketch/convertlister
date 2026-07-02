@@ -1,26 +1,79 @@
-import { aliexpressAdapter } from "./aliexpress.adapter";
-import { amazonAdapter } from "./amazon.adapter";
-import { tiktokAdapter } from "./tiktok.adapter";
-import { NormalizedProduct } from "./core/base.adapter";
+import type {
+  AdapterQuery,
+  AdapterResult,
+  AdapterProduct,
+} from "@/adapters/core/adapter.contract";
 
-export type SourceType = "aliexpress" | "amazon" | "tiktok";
+import { AliExpressAdapter } from "./aliexpress/aliexpress.adapter";
+import { AmazonAdapter } from "./amazon/amazon.adapter";
+import { ShopifyAdapter } from "./shopify/shopify.adapter";
+import { TikTokAdapter } from "./tiktok/tiktok.adapter";
+import { CustomMarketAdapter } from "./custom/custom-market.adapter";
+
+type Source =
+  | "aliexpress"
+  | "amazon"
+  | "shopify"
+  | "tiktok"
+  | "custom";
+
+export interface IngestionRequest extends AdapterQuery {
+  source: Source;
+}
 
 export class IngestionRouter {
-  async ingest(source: SourceType): Promise<NormalizedProduct[]> {
-    switch (source) {
-      case "aliexpress":
-        return aliexpressAdapter.fetchProducts();
+  private readonly aliexpress = new AliExpressAdapter();
+  private readonly amazon = new AmazonAdapter();
+  private readonly shopify = new ShopifyAdapter();
+  private readonly tiktok = new TikTokAdapter();
+  private readonly custom = new CustomMarketAdapter();
 
-      case "amazon":
-        return amazonAdapter.fetchProducts();
+  async route(
+    req: IngestionRequest
+  ): Promise<AdapterResult<AdapterProduct[]>> {
+    try {
+      const normalizedQuery: AdapterQuery = {
+        keyword: req.keyword.trim(),
+        page: req.page ?? 1,
+        filters: req.filters ?? {},
+      };
 
-      case "tiktok":
-        return tiktokAdapter.fetchProducts();
+      switch (req.source) {
+        case "aliexpress":
+          return await this.aliexpress.execute(normalizedQuery);
 
-      default:
-        throw new Error("UNKNOWN_SOURCE");
+        case "amazon":
+          return await this.amazon.execute(normalizedQuery);
+
+        case "shopify":
+          return await this.shopify.execute(normalizedQuery);
+
+        case "tiktok":
+          return await this.tiktok.execute(normalizedQuery);
+
+        case "custom":
+          return await this.custom.execute(normalizedQuery);
+
+        default:
+          return {
+            success: false,
+            data: [],
+            source: "ingestion-router",
+            timestamp: Date.now(),
+            error: `Unsupported source: ${String(req.source)}`,
+          };
+      }
+    } catch (error) {
+      return {
+        success: false,
+        data: [],
+        source: "ingestion-router",
+        timestamp: Date.now(),
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown routing error",
+      };
     }
   }
 }
-
-export const ingestionRouter = new IngestionRouter();

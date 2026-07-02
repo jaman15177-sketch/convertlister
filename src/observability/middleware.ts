@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-
 export function observabilityMiddleware(req: NextRequest) {
   const start = Date.now();
 

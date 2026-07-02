@@ -1,20 +1,25 @@
-type Counter = { value: number };
+import client from "prom-client";
 
-class Metrics {
-  private store: Record<string, Counter> = {};
+/**
+ * ==========================================================
+ * PROMETHEUS METRICS EXPORTER (ENTERPRISE)
+ * ==========================================================
+ */
 
-  inc(key: string, value = 1) {
-    if (!this.store[key]) this.store[key] = { value: 0 };
-    this.store[key].value += value;
-  }
+client.collectDefaultMetrics();
 
-  get(key: string) {
-    return this.store[key]?.value || 0;
-  }
+export const httpRequestCounter = new client.Counter({
+  name: "http_requests_total",
+  help: "Total HTTP requests",
+  labelNames: ["route", "method", "status"],
+});
 
-  all() {
-    return this.store;
-  }
+export const responseTimeHistogram = new client.Histogram({
+  name: "http_response_time_ms",
+  help: "Response time in ms",
+  buckets: [50, 100, 200, 500, 1000, 2000],
+});
+
+export function getMetrics() {
+  return client.register.metrics();
 }
-
-export const metrics = new Metrics();

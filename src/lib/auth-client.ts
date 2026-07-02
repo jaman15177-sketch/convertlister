@@ -4,7 +4,13 @@ import { supabase } from "./supabase";
  * Always get session safely
  */
 export async function getSession() {
-  const { data } = await supabase.auth.getSession();
+  const { data, error } = await supabase.auth.getSession();
+
+  if (error) {
+    console.error("Get session error:", error);
+    return null;
+  }
+
   return data.session;
 }
 
@@ -12,7 +18,13 @@ export async function getSession() {
  * Get current user
  */
 export async function getUser() {
-  const { data } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error) {
+    console.error("Get user error:", error);
+    return null;
+  }
+
   return data.user;
 }
 
@@ -20,5 +32,10 @@ export async function getUser() {
  * Auto logout
  */
 export async function logout() {
-  await supabase.auth.signOut();
+  const { error } = await supabase.auth.signOut();
+
+  if (error) {
+    console.error("Logout error:", error);
+    throw error;
+  }
 }

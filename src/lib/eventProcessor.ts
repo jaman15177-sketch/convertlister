@@ -10,7 +10,6 @@ import { createClient } from "./supabase/server";
 export async function processEvent(eventId: string, payload: any) {
   const supabase = await createClient();
 
-  // Check duplicate event
   const { data: existingEvent, error: fetchError } = await supabase
     .from("webhook_events")
     .select("id")
@@ -30,7 +29,6 @@ export async function processEvent(eventId: string, payload: any) {
     };
   }
 
-  // Store event
   const { error: insertError } = await supabase
     .from("webhook_events")
     .insert({

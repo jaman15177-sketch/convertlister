@@ -1,55 +1,83 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/server/supabase-admin";
-import { processAlert } from "@/lib/core/alert/alert-engine";
+import { runSecurityKernel } from "@/security/kernel/security-kernel-runner";
+
+type AlertPayload = {
+  score?: number;
+  message?: string;
+};
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    // 🔐 SECURITY LAYER (ADD ONLY - NOT REPLACE)
+    const security = await runSecurityKernel(req);
 
-    if (!body?.type) {
+    if (security.decision === "BLOCK") {
       return NextResponse.json(
-        { error: "Missing event type" },
-        { status: 400 }
+        { error: security.reason },
+        { status: 403 }
       );
     }
 
-    // 1. Save raw event to database (audit trail)
-    const { data: eventLog, error: logError } = await supabaseAdmin
-      .from("event_bus")
-      .insert({
-        topic: body.type,
-        payload: body,
-        processed: false,
-        created_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+    // ==========================================
+    // INTERNAL API KEY PROTECTION
+    // ==========================================
 
-    if (logError) throw logError;
+    const apiKey = req.headers.get("x-api-key");
 
-    // 2. Process alert through engine
-    const result = await processAlert(body);
+    if (!apiKey || apiKey !== process.env.INTERNAL_API_KEY) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
 
-    // 3. Mark event as processed
-    const { error: updateError } = await supabaseAdmin
-      .from("event_bus")
-      .update({ processed: true })
-      .eq("id", eventLog.id);
+    // ==========================================
+    // BODY
+    // ==========================================
 
-    if (updateError) throw updateError;
+    const body = (await req.json()) as AlertPayload;
+
+    const score = Number(body.score ?? 0);
+
+    if (score < 120) {
+      return NextResponse.json({
+        success: true,
+        skipped: true,
+      });
+    }
+
+    // ==========================================
+    // ALERT OBJECT
+    // ==========================================
+
+    const alert = {
+      id: crypto.randomUUID(),
+      score,
+      message: body.message ?? "High value event detected",
+      createdAt: Date.now(),
+
+      // 🔥 optional: security metadata
+      risk: security.context.riskScore,
+      user: security.context.userId,
+      tenant: security.context.organizationId,
+    };
 
     return NextResponse.json({
       success: true,
-      eventId: eventLog.id,
-      result,
+      alert,
+      security: {
+        decision: security.decision,
+        reason: security.reason,
+      },
     });
-  } catch (err: any) {
-    console.error("ALERT_ROUTE_ERROR:", err);
-
+  } catch (error: unknown) {
     return NextResponse.json(
       {
         success: false,
-        error: err.message || "Internal Server Error",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Internal Server Error",
       },
       { status: 500 }
     );

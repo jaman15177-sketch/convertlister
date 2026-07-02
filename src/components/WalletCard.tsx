@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
+import { useState, useEffect } from "react";
 export default function WalletCard({ userId }: { userId: string }) {
   const [balance, setBalance] = useState(0);
   const [loading, setLoading] = useState(true);

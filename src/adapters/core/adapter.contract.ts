@@ -1,38 +1,115 @@
+/**
+ * ============================================================
+ * CONVERTLISTER
+ * Adapter Contract
+ * Production Ready
+ * Enterprise Scalable
+ * Backward Compatible
+ * ============================================================
+ */
+
+export interface AdapterQuery {
+  keyword: string;
+  page?: number;
+  filters?: Record<string, unknown>;
+}
+
+/**
+ * Marketplace Variant
+ */
+export interface ProductVariant {
+  id: string;
+
+  sku?: string;
+
+  title?: string;
+
+  price?: number;
+
+  inventory?: number;
+
+  barcode?: string;
+
+  attributes?: Record<string, string>;
+
+  metadata?: Record<string, unknown>;
+}
+
+/**
+ * Marketplace Product
+ */
 export interface AdapterProduct {
   /**
-   * Unique ID from marketplace
+   * Core
    */
   id: string;
 
-  /**
-   * Source marketplace name
-   */
-  source: "aliexpress" | "amazon" | "shopify" | "tiktok" | "custom";
-
-  /**
-   * Product title
-   */
   title: string;
 
-  /**
-   * Normalized price (USD)
-   */
   price: number;
 
+  currency: string;
+
+  source: string;
+
   /**
-   * Optional images
+   * Optional business fields
+   */
+  sku?: string;
+
+  brand?: string;
+
+  category?: string;
+
+  description?: string;
+
+  barcode?: string;
+
+  inventory?: number;
+
+  marketplace?: string;
+
+  /**
+   * Media
    */
   images?: string[];
 
   /**
-   * Rich metadata for intelligence engines
+   * Product Attributes
    */
-  metadata?: {
-    category?: string;
-    rating?: number;
-    orders?: number;
-    descriptionLength?: number;
-    shippingTime?: number;
-    [key: string]: any;
-  };
+  attributes?: Record<string, string>;
+
+  /**
+   * Variants
+   */
+  variants?: ProductVariant[];
+
+  /**
+   * Flexible metadata
+   * (kept for backward compatibility)
+   */
+  metadata?: Record<string, unknown>;
+}
+
+export interface AdapterResult<T = AdapterProduct[]> {
+  success: boolean;
+
+  data: T;
+
+  source: string;
+
+  timestamp: number;
+
+  error?: string;
+}
+
+export interface AdapterContract<
+  Q = AdapterQuery,
+  R = AdapterProduct[]
+> {
+  name: string;
+
+  transform(input: Q): Q;
+
+  execute(input: Q): Promise<AdapterResult<R>>;
 }

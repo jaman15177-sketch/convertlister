@@ -1,0 +1,96 @@
+src/lib/credits-spend.ts(10,24): error TS1361: 'spendWallet' cannot be used as a value because it was imported using 'import type'.
+src/lib/events/log-event.ts(1,18): error TS7006: Parameter 'log' implicitly has an 'any' type.
+src/lib/events/log-event.ts(10,14): error TS7006: Parameter 'log' implicitly has an 'any' type.
+src/lib/init.ts(6,3): error TS1361: 'AdapterRegistry' cannot be used as a value because it was imported using 'import type'.
+src/lib/init.ts(6,32): error TS1361: 'CustomMarketAdapter' cannot be used as a value because it was imported using 'import type'.
+src/lib/payment-verify.ts(14,36): error TS1361: 'supabase' cannot be used as a value because it was imported using 'import type'.
+src/lib/redis.ts(24,7): error TS1361: 'Redis' cannot be used as a value because it was imported using 'import type'.
+src/lib/score.ts(1,38): error TS7006: Parameter 'product' implicitly has an 'any' type.
+src/lib/supabase/client.ts(4,10): error TS1361: 'createBrowserClient' cannot be used as a value because it was imported using 'import type'.
+src/lib/supabase/server.ts(19,30): error TS2339: Property 'getAll' does not exist on type 'Promise<ReadonlyRequestCookies>'.
+src/lib/supabase/server.ts(25,27): error TS2339: Property 'set' does not exist on type 'Promise<ReadonlyRequestCookies>'.
+src/observability/exporter.ts(4,25): error TS1361: 'metrics' cannot be used as a value because it was imported using 'import type'.
+src/observability/logger.ts(6,5): error TS1361: 'metrics' cannot be used as a value because it was imported using 'import type'.
+src/observability/logger.ts(11,5): error TS1361: 'metrics' cannot be used as a value because it was imported using 'import type'.
+src/observability/logger.ts(16,5): error TS1361: 'metrics' cannot be used as a value because it was imported using 'import type'.
+src/observability/registry.ts(6,13): error TS1361: 'health' cannot be used as a value because it was imported using 'import type'.
+src/observability/registry.ts(7,14): error TS1361: 'exportMetrics' cannot be used as a value because it was imported using 'import type'.
+src/pipeline/runPipeline.ts(4,23): error TS1361: 'ProductOptimizationEngine' cannot be used as a value because it was imported using 'import type'.
+src/pipeline/runPipeline.ts(12,22): error TS2339: Property 'length' does not exist on type 'Promise<(AdapterProduct & { optimization?: any; })[]>'.
+src/providers/auth-provider.tsx(6,21): error TS1361: 'createContext' cannot be used as a value because it was imported using 'import type'.
+src/providers/auth-provider.tsx(8,32): error TS7031: Binding element 'children' implicitly has an 'any' type.
+src/providers/auth-provider.tsx(9,27): error TS1361: 'useState' cannot be used as a value because it was imported using 'import type'.
+src/providers/auth-provider.tsx(10,33): error TS1361: 'useState' cannot be used as a value because it was imported using 'import type'.
+src/providers/auth-provider.tsx(12,3): error TS1361: 'useEffect' cannot be used as a value because it was imported using 'import type'.
+src/providers/auth-provider.tsx(13,5): error TS1361: 'supabase' cannot be used as a value because it was imported using 'import type'.
+src/providers/auth-provider.tsx(18,32): error TS1361: 'supabase' cannot be used as a value because it was imported using 'import type'.
+src/providers/auth-provider.tsx(34,30): error TS1361: 'useContext' cannot be used as a value because it was imported using 'import type'.
+src/realtime/cluster/bus/redis-bus.ts(7,3): error TS7008: Member 'payload' implicitly has an 'any' type.
+src/realtime/cluster/gateway/ws-gateway.ts(10,21): error TS1361: 'RedisEventBus' cannot be used as a value because it was imported using 'import type'.
+src/realtime/cluster/gateway/ws-gateway.ts(14,20): error TS1361: 'WebSocketServer' cannot be used as a value because it was imported using 'import type'.
+src/server/server.ts(3,15): error TS2305: Module '"@/lib/core/realtime/ws-server"' has no exported member 'initWebSocket'.
+src/server/server.ts(4,40): error TS2307: Cannot find module '../core/scheduler/interval' or its corresponding type declarations.
+src/server/server.ts(25,5): error TS1361: 'intervalScheduler' cannot be used as a value because it was imported using 'import type'.
+src/server/server.ts(30,24): error TS1361: 'createServer' cannot be used as a value because it was imported using 'import type'.
+src/server/server.ts(47,5): error TS1361: 'initWebSocket' cannot be used as a value because it was imported using 'import type'.
+src/test/bullmq.test.ts(1,34): error TS2307: Cannot find module '@/lib/queue/bull.queue' or its corresponding type declarations.
+src/test/bullmq.test.ts(2,8): error TS2882: Cannot find module or type declarations for side-effect import of '@/lib/queue/worker'.
+src/test/bullmq.test.ts(16,9): error TS1361: 'importQueue' cannot be used as a value because it was imported using 'import type'.
+src/test/e2e-dlq.test.ts(1,34): error TS2307: Cannot find module '@/lib/queue/bull.queue' or its corresponding type declarations.
+src/test/e2e-dlq.test.ts(2,8): error TS2882: Cannot find module or type declarations for side-effect import of '@/lib/queue/worker'.
+src/test/e2e-dlq.test.ts(3,35): error TS2307: Cannot find module '../core/platform/store' or its corresponding type declarations.
+src/test/e2e-dlq.test.ts(4,26): error TS2307: Cannot find module '@/lib/queue/dlq' or its corresponding type declarations.
+src/test/e2e-dlq.test.ts(26,9): error TS1361: 'importQueue' cannot be used as a value because it was imported using 'import type'.
+src/test/e2e-dlq.test.ts(46,5): error TS1361: 'productStore' cannot be used as a value because it was imported using 'import type'.
+src/test/e2e-dlq.test.ts(57,5): error TS1361: 'dlq' cannot be used as a value because it was imported using 'import type'.
+src/test/e2e-pipeline.test.ts(1,34): error TS2307: Cannot find module '@/lib/queue/bull.queue' or its corresponding type declarations.
+src/test/e2e-pipeline.test.ts(2,8): error TS2882: Cannot find module or type declarations for side-effect import of '@/lib/queue/worker'.
+src/test/e2e-pipeline.test.ts(3,35): error TS2307: Cannot find module '../core/platform/store' or its corresponding type declarations.
+src/test/e2e-pipeline.test.ts(4,26): error TS2307: Cannot find module '@/lib/queue/dlq' or its corresponding type declarations.
+src/test/e2e-pipeline.test.ts(26,9): error TS1361: 'importQueue' cannot be used as a value because it was imported using 'import type'.
+src/test/e2e-pipeline.test.ts(48,5): error TS1361: 'productStore' cannot be used as a value because it was imported using 'import type'.
+src/test/e2e-pipeline.test.ts(60,5): error TS1361: 'dlq' cannot be used as a value because it was imported using 'import type'.
+src/test/import-queue.test.ts(1,34): error TS2307: Cannot find module '@/lib/queue/bull.queue' or its corresponding type declarations.
+src/test/import-queue.test.ts(2,8): error TS2882: Cannot find module or type declarations for side-effect import of '@/lib/queue/worker'.
+src/test/import-queue.test.ts(3,35): error TS2307: Cannot find module '../core/platform/store' or its corresponding type declarations.
+src/test/import-queue.test.ts(4,26): error TS2307: Cannot find module '@/lib/queue/dlq' or its corresponding type declarations.
+src/test/import-queue.test.ts(39,9): error TS1361: 'importQueue' cannot be used as a value because it was imported using 'import type'.
+src/test/import-queue.test.ts(59,5): error TS1361: 'productStore' cannot be used as a value because it was imported using 'import type'.
+src/test/import-queue.test.ts(70,5): error TS1361: 'dlq' cannot be used as a value because it was imported using 'import type'.
+src/test/optimization.test.ts(1,118): error TS1361: 'ProductOptimizationEngine' cannot be used as a value because it was imported using 'import type'.
+src/test/queue.test.ts(1,34): error TS2307: Cannot find module '@/lib/queue/queue.client' or its corresponding type declarations.
+src/test/queue.test.ts(7,23): error TS1361: 'queueClient' cannot be used as a value because it was imported using 'import type'.
+src/test/queue.test.ts(24,11): error TS1361: 'queueClient' cannot be used as a value because it was imported using 'import type'.
+src/test/settings.test.ts(1,36): error TS2307: Cannot find module '../core/platform/settings' or its corresponding type declarations.
+src/test/settings.test.ts(9,19): error TS1361: 'settingsStore' cannot be used as a value because it was imported using 'import type'.
+src/test/settings.test.ts(20,3): error TS1361: 'settingsStore' cannot be used as a value because it was imported using 'import type'.
+src/test/settings.test.ts(25,20): error TS1361: 'settingsStore' cannot be used as a value because it was imported using 'import type'.
+src/test/settings.test.ts(36,3): error TS1361: 'settingsStore' cannot be used as a value because it was imported using 'import type'.
+src/test/settings.test.ts(40,20): error TS1361: 'settingsStore' cannot be used as a value because it was imported using 'import type'.
+src/test/settings.test.ts(51,3): error TS1361: 'settingsStore' cannot be used as a value because it was imported using 'import type'.
+src/test/settings.test.ts(55,20): error TS1361: 'settingsStore' cannot be used as a value because it was imported using 'import type'.
+src/test/settings.test.ts(66,3): error TS1361: 'settingsStore' cannot be used as a value because it was imported using 'import type'.
+src/test/settings.test.ts(67,3): error TS1361: 'settingsStore' cannot be used as a value because it was imported using 'import type'.
+src/test/settings.test.ts(69,17): error TS1361: 'settingsStore' cannot be used as a value because it was imported using 'import type'.
+src/test/universal-store.test.ts(1,35): error TS2307: Cannot find module '../core/platform/store' or its corresponding type declarations.
+src/test/universal-store.test.ts(11,3): error TS1361: 'productStore' cannot be used as a value because it was imported using 'import type'.
+src/test/universal-store.test.ts(34,19): error TS1361: 'productStore' cannot be used as a value because it was imported using 'import type'.
+src/types/domain.ts(1,31): error TS2304: Cannot find name 'BaseEntity'.
+src/types/domain.ts(4,13): error TS2304: Cannot find name 'ID'.
+src/types/domain.ts(7,33): error TS2304: Cannot find name 'BaseEntity'.
+src/types/domain.ts(13,7): error TS2304: Cannot find name 'ID'.
+src/types/domain.ts(16,14): error TS2304: Cannot find name 'Timestamp'.
+src/ui/control-tower/page.tsx(19,3): error TS7008: Member 'event' implicitly has an 'any' type.
+src/ui/control-tower/page.tsx(21,5): error TS7008: Member 'ADS_METRICS' implicitly has an 'any' type.
+src/ui/control-tower/page.tsx(22,5): error TS7008: Member 'HEALTH' implicitly has an 'any' type.
+src/ui/control-tower/page.tsx(47,29): error TS1361: 'useState' cannot be used as a value because it was imported using 'import type'.
+src/ui/control-tower/page.tsx(48,37): error TS1361: 'useState' cannot be used as a value because it was imported using 'import type'.
+src/ui/control-tower/page.tsx(53,3): error TS1361: 'useEffect' cannot be used as a value because it was imported using 'import type'.
+src/validation/request.ts(1,52): error TS7006: Parameter 'body' implicitly has an 'any' type.
+src/workers/auto.worker.ts(1,31): error TS2307: Cannot find module '../core/ws/ws-bus/redis.stream.bus' or its corresponding type declarations.
+src/workers/auto.worker.ts(2,40): error TS2307: Cannot find module '../core/factory/autonomous.factory' or its corresponding type declarations.
+src/workers/auto.worker.ts(9,9): error TS1361: 'eventBus' cannot be used as a value because it was imported using 'import type'.
+src/workers/auto.worker.ts(11,9): error TS1361: 'eventBus' cannot be used as a value because it was imported using 'import type'.
+src/workers/auto.worker.ts(14,12): error TS7006: Parameter 'event' implicitly has an 'any' type.
+src/workers/auto.worker.ts(17,17): error TS1361: 'autonomousFactory' cannot be used as a value because it was imported using 'import type'.
+src/workers/auto.worker.ts(26,15): error TS1361: 'eventBus' cannot be used as a value because it was imported using 'import type'.

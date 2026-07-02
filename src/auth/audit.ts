@@ -1,7 +1,13 @@
-export function auditLog(action: string, meta: any) {
+type AuditMeta = {
+  userId?: string;
+  ip?: string;
+  [key: string]: unknown;
+};
+
+export function auditLog(action: string, meta: AuditMeta = {}) {
   console.log("[AUDIT]", {
     action,
     meta,
-    time: new Date().toISOString(),
+    timestamp: Date.now(),
   });
 }

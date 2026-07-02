@@ -3,17 +3,13 @@ import { supabase } from "./supabase";
 /**
  * ADD FRAUD STRIKE
  */
-export async function addFraudStrike(
-  userId: string
-) {
-  // get current
+export async function addFraudStrike(userId: string): Promise<void> {
   const { data } = await supabase
     .from("user_security")
     .select("*")
     .eq("user_id", userId)
     .single();
 
-  // first time
   if (!data) {
     await supabase.from("user_security").insert({
       user_id: userId,
@@ -23,16 +19,11 @@ export async function addFraudStrike(
     return;
   }
 
-  const strikes = data.fraud_strikes + 1;
-
-  // =========================
-  // AUTO BAN LOGIC
-  // =========================
+  const strikes = Number(data.fraud_strikes ?? 0) + 1;
 
   let is_banned = false;
-  let banned_until = null;
+  let banned_until: string | null = null;
 
-  // TEMP BAN
   if (strikes >= 3) {
     is_banned = true;
 
@@ -41,7 +32,6 @@ export async function addFraudStrike(
     ).toISOString();
   }
 
-  // PERMANENT BAN
   if (strikes >= 5) {
     is_banned = true;
     banned_until = null;
@@ -56,40 +46,37 @@ export async function addFraudStrike(
     })
     .eq("user_id", userId);
 
-  // AUDIT LOG
-  await supabase.from("audit_logs").insert({
-    user_id: userId,
+    await supabase.from("audit_logs").insert({
+    actor_id: userId,
     action: "FRAUD_STRIKE",
-    meta: {
+    entity_type: "user_security",
+    entity_id: userId,
+    metadata: {
       strikes,
       is_banned,
     },
+    created_at: new Date().toISOString(),
   });
-}
-
-/**
+}/**
  * CHECK IF USER IS BANNED
  */
 export async function isUserBanned(
   userId: string
-) {
+): Promise<boolean> {
   const { data } = await supabase
     .from("user_security")
     .select("*")
     .eq("user_id", userId)
     .single();
 
-  if (!data) return false;
+  if (!data) {
+    return false;
+  }
 
-  // permanent ban
-  if (
-    data.is_banned &&
-    !data.banned_until
-  ) {
+  if (data.is_banned && !data.banned_until) {
     return true;
   }
 
-  // temporary ban
   if (
     data.banned_until &&
     new Date(data.banned_until) > new Date()

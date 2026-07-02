@@ -1,18 +1,13 @@
-import { metrics } from "./metrics";
+type LogLevel = "info" | "warn" | "error";
 
-export const logger = {
-  info(msg: string) {
-    console.log("[INFO]", msg);
-    metrics.inc("logs_info_total");
-  },
+export function log(level: LogLevel, message: string, meta?: any) {
+  const logEntry = {
+    level,
+    message,
+    meta,
+    timestamp: new Date().toISOString(),
+  };
 
-  error(msg: string) {
-    console.error("[ERROR]", msg);
-    metrics.inc("logs_error_total");
-  },
-
-  warn(msg: string) {
-    console.warn("[WARN]", msg);
-    metrics.inc("logs_warn_total");
-  },
-};
+  // stdout (ELK / Datadog compatible)
+  console.log(JSON.stringify(logEntry));
+}

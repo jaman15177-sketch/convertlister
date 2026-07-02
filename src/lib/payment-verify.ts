@@ -1,5 +1,4 @@
 import { supabase } from "./supabase";
-
 /**
  * VERIFY PAYMENT SAFETY CHECKS
  */

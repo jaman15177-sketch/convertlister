@@ -1,27 +1,37 @@
-"use client";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 
-import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
-const AuthContext = createContext<any>(null);
+type User = {
+  id: string;
+  email?: string;
+};
 
-export function AuthProvider({ children }: any) {
-  const [user, setUser] = useState<any>(null);
+type AuthContextType = {
+  user: User | null;
+  loading: boolean;
+};
+
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data.user);
+    const getUser = async () => {
+      const { data } = await supabase.auth.getUser();
+      setUser(data?.user ?? null);
       setLoading(false);
-    });
+    };
 
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (_, session) => {
-        setUser(session?.user || null);
-      }
-    );
-
-    return () => listener.subscription.unsubscribe();
+    getUser();
   }, []);
 
   return (
@@ -31,4 +41,6 @@ export function AuthProvider({ children }: any) {
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export function useAuth() {
+  return useContext(AuthContext);
+}

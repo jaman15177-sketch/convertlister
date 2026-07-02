@@ -1,6 +1,11 @@
-import { supabaseAdmin } from "@/lib/server/supabase-admin";
+import { supabaseAdmin } from "../../server/supabase-admin";
 
-export async function processAlert(event: any) {
+export interface AlertEvent {
+  type: string;
+  payload?: Record<string, unknown>;
+}
+
+export async function processAlert(event: AlertEvent) {
   try {
     const { data: existing, error: fetchError } = await supabaseAdmin
       .from("alerts")
@@ -13,19 +18,21 @@ export async function processAlert(event: any) {
       throw fetchError;
     }
 
-    // If alert exists → update
+    // Update existing alert
     if (existing) {
       const { data, error } = await supabaseAdmin
         .from("alerts")
         .update({
-          payload: event.payload,
+          payload: event.payload ?? {},
           updated_at: new Date().toISOString(),
         })
         .eq("id", existing.id)
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        throw error;
+      }
 
       return {
         status: "UPDATED",
@@ -33,30 +40,35 @@ export async function processAlert(event: any) {
       };
     }
 
-    // If not exists → create new alert
+    // Create new alert
     const { data, error } = await supabaseAdmin
       .from("alerts")
       .insert({
         event_type: event.type,
-        payload: event.payload,
+        payload: event.payload ?? {},
         status: "ACTIVE",
         created_at: new Date().toISOString(),
       })
       .select()
       .single();
 
-    if (error) throw error;
+    if (error) {
+      throw error;
+    }
 
     return {
       status: "CREATED",
       alert: data,
     };
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("ALERT_ENGINE_ERROR:", err);
 
     return {
       status: "ERROR",
-      message: err.message,
+      message:
+        err instanceof Error
+          ? err.message
+          : "Unknown alert engine error",
     };
   }
 }

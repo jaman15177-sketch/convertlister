@@ -1,30 +1,106 @@
-export class DB {
-  private users: any[] = [];
-  private tenants: any[] = [];
+import { supabase } from "@/core/ssot/db/supabase.client";
+import type { Database } from "@/types/database";
 
-  // USERS
-  insertUser(user: any) {
-    this.users.push(user);
-    return user;
+type Organization = Database["public"]["Tables"]["organizations"]["Row"];
+
+export class Client {
+  /**
+   * Get single organization (tenant replacement)
+   */
+  async getOrganization(id: string): Promise<Organization | null> {
+    const { data, error } = await supabase
+      .from("organizations")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("getOrganization error:", error.message);
+      return null;
+    }
+
+    return data;
   }
 
-  findUserByEmail(email: string) {
-    return this.users.find(u => u.email === email);
+  /**
+   * Get all organizations for a user (if owner-based model)
+   */
+  async getUserOrganizations(userId: string): Promise<Organization[]> {
+    const { data, error } = await supabase
+      .from("organizations")
+      .select("*")
+      .eq("owner_id", userId);
+
+    if (error || !data) {
+      console.error("getUserOrganizations error:", error?.message);
+      return [];
+    }
+
+    return data;
   }
 
-  findUserById(id: string) {
-    return this.users.find(u => u.id === id);
+  /**
+   * Create organization
+   */
+  async createOrganization(
+    name: string,
+    ownerId: string
+  ): Promise<Organization | null> {
+    const { data, error } = await supabase
+      .from("organizations")
+      .insert({
+        name,
+        owner_id: ownerId,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error("createOrganization error:", error.message);
+      return null;
+    }
+
+    return data;
   }
 
-  // TENANTS
-  insertTenant(tenant: any) {
-    this.tenants.push(tenant);
-    return tenant;
+  /**
+   * Update organization
+   */
+  async updateOrganization(
+    id: string,
+    payload: Partial<Organization>
+  ): Promise<Organization | null> {
+    const { data, error } = await supabase
+      .from("organizations")
+      .update(payload)
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("updateOrganization error:", error.message);
+      return null;
+    }
+
+    return data;
   }
 
-  findTenantById(id: string) {
-    return this.tenants.find(t => t.id === id);
+  /**
+   * Delete organization
+   */
+  async deleteOrganization(id: string): Promise<boolean> {
+    const { error } = await supabase
+      .from("organizations")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      console.error("deleteOrganization error:", error.message);
+      return false;
+    }
+
+    return true;
   }
 }
 
-export const db = new DB();
+export const client = new Client();

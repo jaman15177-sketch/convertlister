@@ -1,41 +1,48 @@
-import { AdapterProduct } from "../core/adapter.contract";
+import type {
+  AdapterContract,
+  AdapterResult,
+  AdapterProduct,
+  AdapterQuery
+} from "@/adapters/core/adapter.contract";
 
-export interface AliExpressProduct {
-  id: string;
-  title: string;
-  price: number;
-  rating?: number;
-  orders?: number;
-  shippingTime?: number;
-  imageUrl?: string;
-}
+export class AliExpressAdapter implements AdapterContract<AdapterQuery, AdapterProduct[]> {
+  name = "aliexpress";
 
-export class AliExpressAdapter {
-  async fetchProducts(): Promise<AdapterProduct[]> {
+  transform(input: AdapterQuery): AdapterQuery {
+    return {
+      keyword: input.keyword.trim(),
+      page: input.page ?? 1,
+    };
+  }
+
+  async execute(input: AdapterQuery): Promise<AdapterResult<AdapterProduct[]>> {
+    const raw = await this.fakeFetch(input);
+
+    const products: AdapterProduct[] = raw.map((item: any) => ({
+      id: item.id,
+      title: item.title,
+      price: Number(item.price || 0),
+      currency: "USD",
+      source: this.name,
+      images: item.image ? [item.image] : [],
+      metadata: {},
+    }));
+
+    return {
+      success: true,
+      data: products,
+      source: this.name,
+      timestamp: Date.now(),
+    };
+  }
+
+  private async fakeFetch(input: AdapterQuery) {
     return [
       {
-        id: "alx_1",
-        source: "aliexpress",
-        title: "Wireless Smart LED Strip Light",
-        price: 12.99,
-        images: ["https://example.com/img1.jpg"],
-        metadata: {
-          rating: 4.6,
-          orders: 12000,
-          shippingTime: 7,
-        },
-      },
-      {
-        id: "alx_2",
-        source: "aliexpress",
-        title: "Portable Mini Blender USB",
-        price: 18.5,
-        images: ["https://example.com/img2.jpg"],
-        metadata: {
-          rating: 4.4,
-          orders: 8000,
-          shippingTime: 10,
-        },
+        id: "ae-1",
+        title: `AliExpress ${input.keyword}`,
+        price: 10,
+        image: "",
       },
     ];
   }

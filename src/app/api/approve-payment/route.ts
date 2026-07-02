@@ -1,117 +1,191 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+
 import { getUser } from "@/lib/auth";
-import { isAdmin } from "@/lib/admin";
+import { rateLimit } from "@/lib/rate-limit";
+import { supabase } from "@/lib/supabase";
+
+import { runSecurityKernel } from "@/security/kernel/security-kernel-runner";
+
+// ==============================
+// TYPES (STRICT SAFE)
+// ==============================
+type PaymentRequest = {
+  id: string;
+  user_id: string;
+  credits: number;
+  status: "pending" | "approved" | "rejected";
+  verified?: boolean;
+  approved_at?: string | null;
+};
+
+type Profile = {
+  id: string;
+  role: "admin" | "user";
+};
+
+type ApprovePaymentBody = {
+  paymentRequestId: string;
+};
 
 export async function POST(req: Request) {
   try {
-    const user = await getUser(req);
+    // ==============================
+    // SECURITY LAYER
+    // ==============================
+    const security = await runSecurityKernel(req);
 
-    // 1. AUTH CHECK
-    if (!user) {
+    if (security.decision === "BLOCK") {
       return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
-    }
-
-    // 2. ADMIN CHECK
-    const admin = await isAdmin(user.id);
-
-    if (!admin) {
-      return NextResponse.json(
-        { error: "Forbidden - Admin only" },
+        { success: false, error: security.reason },
         { status: 403 }
       );
     }
 
-    const { paymentId } = await req.json();
+    // ==============================
+    // AUTH
+    // ==============================
+    const user = await getUser(req);
 
-    if (!paymentId) {
+    if (!user) {
       return NextResponse.json(
-        { error: "Missing paymentId" },
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // ==============================
+    // RATE LIMIT
+    // ==============================
+    const allowed = await rateLimit(`approve:${user.id}`, 10, 60_000);
+
+    if (!allowed) {
+      return NextResponse.json(
+        { success: false, error: "Too many requests" },
+        { status: 429 }
+      );
+    }
+
+    // ==============================
+    // ADMIN CHECK (SAFE TYPE)
+    // ==============================
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("id, role")
+      .eq("id", user.id)
+      .single();
+
+    const profile = profileRow as Profile | null;
+
+    if (!profile || profile.role !== "admin") {
+      return NextResponse.json(
+        { success: false, error: "Forbidden" },
+        { status: 403 }
+      );
+    }
+
+    // ==============================
+    // BODY
+    // ==============================
+    const body = (await req.json()) as ApprovePaymentBody;
+
+    if (!body?.paymentRequestId) {
+      return NextResponse.json(
+        { success: false, error: "paymentRequestId required" },
         { status: 400 }
       );
     }
 
-    // 3. GET PAYMENT
-    const { data: payment, error } = await supabase
+    // ==============================
+    // LOAD PAYMENT REQUEST
+    // ==============================
+    const { data: requestRow } = await supabase
       .from("payment_requests")
       .select("*")
-      .eq("id", paymentId)
+      .eq("id", body.paymentRequestId)
       .single();
 
-    if (error || !payment) {
+    const request = requestRow as PaymentRequest | null;
+
+    if (!request) {
       return NextResponse.json(
-        { error: "Payment not found" },
+        { success: false, error: "Payment request not found" },
         { status: 404 }
       );
     }
 
-    // 4. CHECK ALREADY APPROVED
-    if (payment.status === "approved") {
-      return NextResponse.json({
-        error: "Already approved",
-      });
+    if (request.status === "approved") {
+      return NextResponse.json(
+        { success: false, error: "Already approved" },
+        { status: 409 }
+      );
     }
 
-    // 5. FRAUD CHECK (basic safety)
-    if (!payment.trx_id || payment.amount <= 0) {
-      return NextResponse.json({
-        error: "Invalid payment data",
-      });
-    }
+    // ==============================
+    // APPROVE REQUEST
+    // ==============================
+    const table = "payment_requests";
 
-    // 6. GET WALLET
-    const { data: wallet } = await supabase
+const { error: approveError } = await supabase
+  .from("payment_requests")
+  .update({
+    status: "approved",
+    verified: true,
+    approved_at: new Date().toISOString(),
+  } as any)   // 🔥 IMPORTANT FIX
+  .eq("id", request.id);
+if (approveError) {
+  return NextResponse.json(
+    { success: false, error: approveError.message },
+    { status: 500 }
+  );
+}    // ==============================
+    // CREDIT WALLET
+    // ==============================
+    const { data: walletRow } = await supabase
       .from("wallets")
-      .select("*")
-      .eq("user_id", payment.user_id)
+      .select("balance")
+      .eq("user_id", request.user_id)
       .single();
 
-    // 7. UPDATE WALLET
-    const newBalance =
-      (wallet?.balance || 0) + payment.credits;
+    const balance = (walletRow as any)?.balance ?? 0;
 
-    await supabase
+    const { error: walletError } = await supabase
       .from("wallets")
       .update({
-        balance: newBalance,
-        updated_at: new Date().toISOString(),
+        balance: balance + request.credits,
       })
-      .eq("user_id", payment.user_id);
+      .eq("user_id", request.user_id);
 
-    // 8. MARK PAYMENT APPROVED
-    await supabase
-      .from("payment_requests")
-      .update({
-        status: "approved",
-        verified: true,
-      })
-      .eq("id", paymentId);
+    if (walletError) {
+      return NextResponse.json(
+        { success: false, error: walletError.message },
+        { status: 500 }
+      );
+    }
 
-    // 9. AUDIT LOG
-    await supabase.from("audit_logs").insert({
-      user_id: payment.user_id,
-      action: "PAYMENT_APPROVED",
-      meta: {
-        paymentId,
-        amount: payment.amount,
-        credits: payment.credits,
-        trx_id: payment.trx_id,
-        approved_by: user.id,
-      },
-    });
-
-    // 10. RESPONSE
+    // ==============================
+    // SUCCESS RESPONSE
+    // ==============================
     return NextResponse.json({
       success: true,
-      message: "Payment approved successfully",
-      newBalance,
+      approved: true,
+      paymentRequestId: request.id,
+      credited: request.credits,
+      userId: request.user_id,
+      security: {
+        decision: security.decision,
+        risk: security.context?.riskScore,
+      },
     });
-  } catch (err: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: err.message || "Server error" },
+      {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Internal Server Error",
+      },
       { status: 500 }
     );
   }

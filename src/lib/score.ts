@@ -1,4 +1,10 @@
-export function calculateHealthScore(product: any) {
+type Product = {
+  title?: string;
+  price?: number;
+  description?: string;
+};
+
+export function calculateHealthScore(product: Product): number {
   if (!product) return 0;
 
   let score = 50;

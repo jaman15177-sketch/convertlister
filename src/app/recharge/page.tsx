@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { PAYMENT_CONFIG } from "@/config/payment";
-
+import { useState } from "react";import { PAYMENT_CONFIG } from "@/config/payment";
 export default function RechargePage() {
   const [trxId, setTrxId] = useState("");
   const [sender, setSender] = useState("");

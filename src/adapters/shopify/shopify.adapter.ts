@@ -1,21 +1,43 @@
-import { AdapterProduct } from "../core/adapter.contract";
+import type { AdapterContract, AdapterResult, AdapterProduct, AdapterQuery } from "../core/adapter.contract";
 
-export interface ShopifyProduct {
-  id: string;
-  title: string;
-  price: number;
-}
+export class ShopifyAdapter implements AdapterContract<AdapterQuery, AdapterProduct[]> {
+  name = "shopify";
 
-export class ShopifyAdapter {
-  async fetchProducts(): Promise<AdapterProduct[]> {
+  transform(input: AdapterQuery): AdapterQuery {
+    return {
+      keyword: input.keyword.trim(),
+      page: input.page ?? 1,
+      filters: input.filters ?? {},
+    };
+  }
+
+  async execute(input: AdapterQuery): Promise<AdapterResult<AdapterProduct[]>> {
+    const raw = await this.fakeFetch(input);
+
+    const products: AdapterProduct[] = raw.map((p: any) => ({
+      id: p.id,
+      title: p.title,
+      price: Number(p.price || 0),
+      currency: "USD",
+      source: this.name,
+      images: [],
+      metadata: {},
+    }));
+
+    return {
+      success: true,
+      data: products,
+      source: this.name,
+      timestamp: Date.now(),
+    };
+  }
+
+  private async fakeFetch(input: AdapterQuery) {
     return [
       {
-        id: "shop_1",
-        source: "shopify",
-        title: "Wireless LED Lamp",
-        price: 25,
-        images: [],
-        metadata: {},
+        id: "shop-1",
+        title: `Shopify ${input.keyword}`,
+        price: 40,
       },
     ];
   }

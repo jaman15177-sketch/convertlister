@@ -1,17 +1,17 @@
-import { supabase } from "./supabase";
+import { createClient } from "redis";
 
-export async function getSession() {
-  const { data, error } = await supabase.auth.getSession();
+const redis = createClient({
+  url: process.env.REDIS_URL,
+});
 
-  if (error) return null;
+redis.connect();
 
-  return data.session;
-}
+export async function validateSession(sessionId: string) {
+  if (!sessionId || sessionId === "no-session") {
+    return false;
+  }
 
-export async function getUser() {
-  const { data, error } = await supabase.auth.getUser();
+  const session = await redis.get(`session:${sessionId}`);
 
-  if (error) return null;
-
-  return data.user;
+  return session === "active";
 }

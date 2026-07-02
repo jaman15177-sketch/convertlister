@@ -1,35 +1,36 @@
-// 🧠 MVP AUDIT LAYER (SaaS-ready stub)
-// Later upgrade → Supabase / DB / Kafka
+import { supabase } from "@/core/ssot/db/supabase.client";
+import type { Json } from "@/types/database";
 
-type AuditEvent = {
+export type LogAuditInput = {
+  organizationId: string;
   userId: string;
   action: string;
-  metadata?: any;
-  timestamp: string;
+  metadata?: Record<string, unknown>;
+  entityType?: string;
+  entityId?: string | null;
 };
 
-const memoryLog: AuditEvent[] = [];
+export async function logAudit({
+  organizationId,
+  userId,
+  action,
+  metadata = {},
+  entityType = "system",
+  entityId = null,
+}: LogAuditInput) {
+  const { error } = await supabase
+    .from("audit_logs")
+    .insert({
+      organization_id: organizationId,
+      actor_id: userId,
+      action,
+      entity_type: entityType,
+      entity_id: entityId,
+      metadata: metadata as Json,
+      created_at: new Date().toISOString(),
+    });
 
-export async function logAudit(
-  userId: string,
-  action: string,
-  metadata?: any
-) {
-  const event: AuditEvent = {
-    userId,
-    action,
-    metadata,
-    timestamp: new Date().toISOString(),
-  };
-
-  memoryLog.push(event);
-
-  // dev visibility
-  console.log("AUDIT_EVENT:", event);
-
-  return { success: true };
-}
-
-export function getAuditLogs() {
-  return memoryLog;
+  if (error) {
+    console.error("audit error:", error.message);
+  }
 }

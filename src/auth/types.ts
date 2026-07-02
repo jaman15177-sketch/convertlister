@@ -4,7 +4,7 @@ export type User = {
   id: string;
   email: string;
   password: string;
-  tenantId: string;
+  organizationId: string;
   role: Role;
 };
 
@@ -15,6 +15,6 @@ export type Tenant = {
 
 export type JwtPayload = {
   userId: string;
-  tenantId: string;
+  organizationId: string;
   role: Role;
 };

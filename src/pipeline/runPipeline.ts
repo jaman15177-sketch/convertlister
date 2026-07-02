@@ -1,9 +1,15 @@
-export async function runPipeline() {
-  console.log("PIPELINE TEMP DISABLED");
+import { ProductOptimizationEngine } from "@/core/optimization/product-optimization.engine";
+import type { AdapterProduct } from "@/adapters/core/adapter.contract";
+
+const optimizer = new ProductOptimizationEngine();
+
+export async function runPipeline(products: AdapterProduct[]) {
+  const optimized = await optimizer.optimize(products);
 
   return {
-    status: "ok",
-    message: "stub pipeline active",
-    data: []
+    success: true,
+    data: optimized,
+    total: optimized.length,
+    timestamp: Date.now(),
   };
 }

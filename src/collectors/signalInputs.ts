@@ -1,6 +1,6 @@
 // src/collectors/signalInputs.ts
 
-import { Signal } from "../types/signal";
+import type { Signal } from "../types/signal";
 
 /**
  * 🧠 SIGNAL INPUT LAYERS (CORE DATA INGESTION)

@@ -1,18 +1,41 @@
-import { AdapterProduct } from "../core/adapter.contract";
+import type { AdapterContract, AdapterResult, AdapterProduct, AdapterQuery } from "../core/adapter.contract";
 
-export class CustomMarketAdapter {
-  constructor(private config?: any) {}
+export class CustomMarketAdapter implements AdapterContract<AdapterQuery, AdapterProduct[]> {
+  name = "custom";
 
-  async fetchProducts(): Promise<AdapterProduct[]> {
-    if (!this.config?.products) return [];
+  transform(input: AdapterQuery): AdapterQuery {
+    return input;
+  }
 
-    return this.config.products.map((p: any) => ({
+  async execute(input: AdapterQuery): Promise<AdapterResult<AdapterProduct[]>> {
+    const raw = await this.fakeFetch(input);
+
+    const products: AdapterProduct[] = raw.map((p: any) => ({
       id: p.id,
-      source: "custom",
       title: p.title,
       price: Number(p.price || 0),
-      images: p.images || [],
+      currency: "USD",
+      source: this.name,
+      images: p.image ? [p.image] : [],
       metadata: p.metadata || {},
     }));
+
+    return {
+      success: true,
+      data: products,
+      source: this.name,
+      timestamp: Date.now(),
+    };
+  }
+
+  private async fakeFetch(input: AdapterQuery) {
+    return [
+      {
+        id: "c-1",
+        title: `Custom ${input.keyword}`,
+        price: 99,
+        image: "",
+      },
+    ];
   }
 }

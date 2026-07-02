@@ -1,82 +1,133 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { logAudit } from "@/lib/audit/logAudit";
+
+import {
+  getCurrentUser,
+  UnauthorizedError,
+  BadRequestError,
+  ForbiddenError,
+} from "@/lib/auth/get-current-user";
+
+import { runSecurityKernel } from "@/security/kernel/security-kernel-runner";
+import { deductCredit } from "@/lib/credits/deduct-credit";
+
+interface GenerateProductBody {
+  title?: string;
+  price?: number;
+}
 
 export async function POST(req: Request) {
   try {
-    // =========================
-    // 1. INIT SUPABASE CLIENT
-    // =========================
-    const supabase = await createClient();
+    // Authentication + Tenant
+    const user = await getCurrentUser(req);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    // Existing security layer
+    const security = await runSecurityKernel(req);
 
-    if (authError || !user) {
+    if (security.decision === "BLOCK") {
       return NextResponse.json(
         {
           success: false,
-          error: "Unauthorized",
+          error: security.reason,
         },
-        { status: 401 }
+        {
+          status: 403,
+        }
       );
     }
 
-    // =========================
-    // 2. PARSE REQUEST BODY
-    // =========================
-    const body = await req.json();
+    const body = (await req.json()) as GenerateProductBody;
 
-    const { prompt } = body;
+    // Credit engine
+    const creditResult = await deductCredit(user.id, 1);
 
-    if (!prompt) {
+    if (!creditResult.success) {
       return NextResponse.json(
         {
           success: false,
-          error: "Missing prompt",
+          error: "INSUFFICIENT_CREDITS",
         },
-        { status: 400 }
+        {
+          status: 402,
+        }
       );
     }
 
-    // =========================
-    // 3. CORE BUSINESS LOGIC
-    // (placeholder generator)
-    // =========================
     const product = {
       id: crypto.randomUUID(),
+      title: body.title?.trim() || "Generated Product",
+      price: body.price ?? 0,
+      currency: "USD",
       userId: user.id,
-      prompt,
-      status: "GENERATED",
-      createdAt: new Date().toISOString(),
+      organizationId: user.organizationId,
+      createdAt: Date.now(),
     };
 
-    // =========================
-    // 4. AUDIT LOG (REVENUE TRACKING)
-    // =========================
-    await logAudit(user.id, "PRODUCT_GENERATED", {
-      cost: 10,
-      productId: product.id,
-    });
-
-    // =========================
-    // 5. RESPONSE
-    // =========================
     return NextResponse.json({
       success: true,
       product,
+      remainingCredits: creditResult.remaining ?? null,
     });
-  } catch (error: any) {
-    console.error("generate-product error:", error);
+
+  } catch (err: unknown) {
+
+    if (err instanceof UnauthorizedError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: err.message,
+        },
+        {
+          status: 401,
+        }
+      );
+    }
+
+    if (err instanceof BadRequestError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: err.message,
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    if (err instanceof ForbiddenError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: err.message,
+        },
+        {
+          status: 403,
+        }
+      );
+    }
+
+    if (err instanceof SyntaxError) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "INVALID_JSON",
+        },
+        {
+          status: 400,
+        }
+      );
+    }
+
+    console.error("Generate Product API Error:", err);
 
     return NextResponse.json(
       {
         success: false,
-        error: error?.message || "Internal Server Error",
+        error: "INTERNAL_SERVER_ERROR",
       },
-      { status: 500 }
+      {
+        status: 500,
+      }
     );
   }
 }

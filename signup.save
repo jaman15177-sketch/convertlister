@@ -1,0 +1,31 @@
+import { supabase } from "@/lib/supabase";
+
+export async function POST(req: Request) {
+  try {
+    const { email, password } = await req.json();
+
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error("SUPABASE_ERROR:", error);
+      return Response.json({
+        success: false,
+        error: error.message || "Auth failed",
+        fullError: JSON.stringify(error, null, 2),
+      });
+    }
+
+    return Response.json({
+      success: true,
+      user: data.user,
+    });
+  } catch (err: any) {
+    return Response.json({
+      success: false,
+      error: err.message,
+    });
+  }
+}

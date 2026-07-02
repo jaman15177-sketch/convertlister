@@ -1,4 +1,4 @@
-import { GatewayContext } from "./types";
+import type { GatewayContext } from "./types";
 
 export function authGuard(ctx: Partial<GatewayContext>) {
   if (!ctx.user?.id) {

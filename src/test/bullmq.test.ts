@@ -1,5 +1,4 @@
-import { importQueue } from "../lib/queue/bull.queue";
-import "../lib/queue/worker";
+import { importQueue } from "@/lib/queue/bull.queue";import "@/lib/queue/worker";
 
 async function test() {
   console.log("🚀 TEST START");

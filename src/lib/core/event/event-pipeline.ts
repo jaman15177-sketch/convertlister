@@ -1,30 +1,29 @@
-import { eventBus } from "../bus/event-bus";
+import { eventBus } from "../ws/ws-bus";
 import { processAlert } from "../alert/alert-engine";
 
-export async function processEvent(input: any) {
-  const event = {
-    id: crypto.randomUUID(),
-    type: "log.created",
-    job_id: input.job_id,
-    level: input.level,
-    message: input.message,
-    timestamp: new Date().toISOString(),
-  };
+export interface EventInput {
+  type: string;
+  payload?: Record<string, unknown>;
+  trace_id?: string;
+}
 
-  // 1. EMIT LOG EVENT
-  eventBus.emitEvent("log.created", event);
+export async function processEvent(input: EventInput) {
+  try {
+    eventBus.emit("event", input);
 
-  // 2. ALERT ENGINE (ONLY PLACE IT EXISTS)
-  const alert = await processAlert(event);
+    const alertResult = await processAlert({
+      type: input.type,
+      payload: input.payload,
+    });
 
-  // 3. EMIT ALERT EVENTS
-  if (alert?.created) {
-    eventBus.emitEvent("alert.created", alert.data);
+    return {
+      success: true,
+      alert: alertResult,
+    };
+  } catch (err) {
+    return {
+      success: false,
+      error: err instanceof Error ? err.message : "Unknown error",
+    };
   }
-
-  if (alert?.updated) {
-    eventBus.emitEvent("alert.updated", alert.data);
-  }
-
-  return { event, alert };
 }

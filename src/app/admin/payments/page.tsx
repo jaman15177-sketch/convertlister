@@ -1,7 +1,16 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/core/ssot/db/supabase.client";
+
+type Payment = {
+  id: string;
+  trx_id: string;
+  amount: number;
+  credits: number;
+  sender_number: string;
+  status: string;
+  created_at: string;
+};
 
 export default async function AdminPaymentsPage() {
-
   const { data: payments, error } = await supabase
     .from("payment_requests")
     .select("*")
@@ -12,15 +21,15 @@ export default async function AdminPaymentsPage() {
     return <div>Error loading payments</div>;
   }
 
+  const safePayments = (payments ?? []) as Payment[];
+
   return (
     <div style={{ padding: 20 }}>
       <h1>Pending Payments</h1>
 
-      {payments?.length === 0 && (
-        <p>No pending payments</p>
-      )}
+      {safePayments.length === 0 && <p>No pending payments</p>}
 
-      {payments?.map((p) => (
+      {safePayments.map((p) => (
         <div
           key={p.id}
           style={{

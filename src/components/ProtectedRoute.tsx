@@ -1,10 +1,13 @@
-"use client";
-
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/hooks/useUser";
+import type { ReactNode } from "react";
 
-export default function ProtectedRoute({ children }: any) {
+type ProtectedRouteProps = {
+  children: ReactNode;
+};
+
+export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, loading } = useUser();
   const router = useRouter();
 
@@ -12,11 +15,7 @@ export default function ProtectedRoute({ children }: any) {
     if (!loading && !user) {
       router.push("/login");
     }
-  }, [user, loading]);
+  }, [loading, user, router]);
 
-  if (loading) return <p>Loading...</p>;
-
-  if (!user) return null;
-
-  return children;
+  return <>{children}</>;
 }
