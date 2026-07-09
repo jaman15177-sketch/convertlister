@@ -63,8 +63,13 @@ export interface AdapterProduct {
 
   description?: string;
 
-  barcode?: string;
+/**
+ * Canonical Bullet Points
+ * Shared across all marketplaces
+ */
+bullets?: string[];
 
+barcode?: string;
   inventory?: number;
 
   marketplace?: string;
@@ -78,7 +83,20 @@ export interface AdapterProduct {
    * Product Attributes
    */
   attributes?: Record<string, string>;
+/**
+ * SEO Metadata
+ */
+seo?: {
+  metaTitle?: string;
 
+  metaDescription?: string;
+
+  slug?: string;
+
+  canonicalUrl?: string;
+
+  robots?: string;
+};
   /**
    * Variants
    */

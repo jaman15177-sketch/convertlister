@@ -1,21 +1,26 @@
 import { BaseValidator } from "../base/base-validator";
 
+import type { AdapterProduct } from "@/adapters/core/adapter.contract";
+
+import type { HealthCategory } from "../health.types";
+
 import type {
   ValidatorInput,
   ValidatorResult,
 } from "../base/validator.types";
 
-import type { HealthCategory } from "../health.types";
+import type {
+  CatalogMetadata,
+} from "../base/metadata.engine";
 
 import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
+  TelemetryReport,
+} from "../base/telemetry.engine";
 
 /**
  * ============================================================
  * CONVERTLISTER
- * IMAGE VALIDATOR
- * Enterprise Production Version
+ * Enterprise Image Validator
  * ============================================================
  */
 
@@ -30,36 +35,33 @@ export class ImageValidator extends BaseValidator {
 
     await this.beforeValidate(input);
 
+    const product: AdapterProduct = input.product;
+
     const result = this.emptyResult();
 
-    const product: AdapterProduct =
-      input.product;
-
-    const marketplace =
-      input.context.marketplace || "generic";
+    const marketplace = this.getMarketplace(input);
 
     const images = Array.isArray(product.images)
-      ? product.images.filter(
-          (image): image is string =>
-            typeof image === "string"
-        )
-      : [];
+  ? product.images.filter(
+      (image): image is string =>
+        typeof image === "string"
+    )
+  : []; 
+/**
+ * ============================================================
+ * IMAGE REQUIRED
+ * ============================================================
+ */
 
-    let score = result.score;    /**
-     * ============================================================
-     * IMAGE EXISTENCE
-     * ============================================================
-     */
     if (images.length === 0) {
-      result.issues.push(
-        this.critical(
-          "IMAGE_MISSING",
-          "No product images found",
-          "Add at least one high-quality product image."
-        )
+      this.critical(
+        result,
+        "IMAGE_MISSING",
+        "No product images found",
+        "Add at least one high-quality product image."
       );
 
-      score = this.deductScore(score, 40);
+      this.deductScore(result, 40);
     }
 
     /**
@@ -67,28 +69,27 @@ export class ImageValidator extends BaseValidator {
      * IMAGE COUNT
      * ============================================================
      */
+
     if (images.length > 0 && images.length < 3) {
-      result.issues.push(
-        this.warning(
-          "LOW_IMAGE_COUNT",
-          "Too few product images",
-          "Use at least 3 product images."
-        )
+      this.warning(
+        result,
+        "LOW_IMAGE_COUNT",
+        "Too few product images",
+        "Use at least 3 product images."
       );
 
-      score = this.deductScore(score, 10);
+      this.deductScore(result, 10);
     }
 
     if (images.length > 10) {
-      result.issues.push(
-        this.warning(
-          "TOO_MANY_IMAGES",
-          "Too many product images",
-          "Keep image count between 3 and 10."
-        )
+      this.warning(
+        result,
+        "TOO_MANY_IMAGES",
+        "Too many product images",
+        "Keep image count between 3 and 10."
       );
 
-      score = this.deductScore(score, 10);
+      this.deductScore(result, 10);
     }
 
     /**
@@ -96,68 +97,33 @@ export class ImageValidator extends BaseValidator {
      * URL VALIDATION
      * ============================================================
      */
-    const invalidImages = images.filter(
-      (image) => {
-        try {
-          const url = new URL(image);
-          return !["http:", "https:"].includes(
-            url.protocol
-          );
-        } catch {
-          return true;
-        }
+
+    const invalidImages = images.filter((image) => {
+      try {
+        const url = new URL(image);
+        return !["http:", "https:"].includes(url.protocol);
+      } catch {
+        return true;
       }
-    );
+    });
 
     if (invalidImages.length > 0) {
-      result.issues.push(
-        this.warning(
-          "INVALID_IMAGE_URL",
-          "Invalid image URL detected",
-          "Use valid HTTP or HTTPS image URLs."
-        )
+      this.warning(
+        result,
+        "INVALID_IMAGE_URL",
+        "Invalid image URL detected",
+        "Use valid HTTP or HTTPS image URLs."
       );
 
-      score = this.deductScore(score, 15);
+      this.deductScore(result, 15);
     }
 
     /**
      * ============================================================
-     * SEO FILE NAME
-     * ============================================================
-     */
-    const weakSeoImages = images.filter((image) => {
-      try {
-        const pathname = new URL(image).pathname;
-
-        const filename = pathname
-          .split("/")
-          .pop()
-          ?.toLowerCase() ?? "";
-
-        return /^(img|image|photo|pic)[-_]?\d*/.test(
-          filename
-        );
-      } catch {
-        return false;
-      }
-    });
-
-    if (weakSeoImages.length > 0) {
-      result.issues.push(
-        this.info(
-          "WEAK_IMAGE_SEO",
-          "Some image filenames are not SEO-friendly",
-          "Use descriptive filenames containing product keywords."
-        )
-      );
-
-      score = this.deductScore(score, 5);
-    }    /**
-     * ============================================================
      * DUPLICATE IMAGE DETECTION
      * ============================================================
      */
+
     const normalizedImages = images.map((image) =>
       image.trim().toLowerCase()
     );
@@ -165,15 +131,40 @@ export class ImageValidator extends BaseValidator {
     const uniqueImages = new Set(normalizedImages);
 
     if (uniqueImages.size !== normalizedImages.length) {
-      result.issues.push(
-        this.warning(
-          "DUPLICATE_IMAGES",
-          "Duplicate product images detected",
-          "Remove duplicate images."
-        )
+      this.warning(
+        result,
+        "DUPLICATE_IMAGES",
+        "Duplicate product images detected",
+        "Remove duplicate images."
       );
 
-      score = this.deductScore(score, 10);
+      this.deductScore(result, 10);
+    }    /**
+     * ============================================================
+     * SEO FILE NAME
+     * ============================================================
+     */
+
+    const weakSeoImages = images.filter((image) => {
+      try {
+        const pathname = new URL(image).pathname;
+
+        const filename =
+          pathname.split("/").pop()?.toLowerCase() ?? "";
+
+        return /^(img|image|photo|pic)[-_]?\d*/.test(filename);
+      } catch {
+        return false;
+      }
+    });
+
+    if (weakSeoImages.length > 0) {
+      this.info(
+        result,
+        "WEAK_IMAGE_SEO",
+        "Some image filenames are not SEO-friendly",
+        "Use descriptive filenames containing product keywords."
+      );
     }
 
     /**
@@ -181,46 +172,44 @@ export class ImageValidator extends BaseValidator {
      * MARKETPLACE RULES
      * ============================================================
      */
-    switch (marketplace.toLowerCase()) {
+
+    switch (marketplace) {
       case "amazon":
         if (images.length < 6) {
-          result.issues.push(
-            this.warning(
-              "AMAZON_IMAGE_REQUIREMENT",
-              "Amazon listings perform better with multiple images.",
-              "Use at least 6 product images."
-            )
+          this.warning(
+            result,
+            "AMAZON_IMAGE_REQUIREMENT",
+            "Amazon listings perform better with multiple images.",
+            "Use at least 6 product images."
           );
 
-          score = this.deductScore(score, 10);
+          this.deductScore(result, 10);
         }
         break;
 
       case "shopify":
         if (images.length < 4) {
-          result.issues.push(
-            this.info(
-              "SHOPIFY_IMAGE_RECOMMENDATION",
-              "More product images can improve conversion.",
-              "Use at least 4 product images."
-            )
+          this.info(
+            result,
+            "SHOPIFY_IMAGE_RECOMMENDATION",
+            "More product images can improve conversion.",
+            "Use at least 4 product images."
           );
 
-          score = this.deductScore(score, 5);
+          this.deductScore(result, 5);
         }
         break;
 
       case "etsy":
         if (images.length < 5) {
-          result.issues.push(
-            this.info(
-              "ETSY_IMAGE_RECOMMENDATION",
-              "Etsy listings benefit from multiple lifestyle images.",
-              "Use at least 5 product images."
-            )
+          this.info(
+            result,
+            "ETSY_IMAGE_RECOMMENDATION",
+            "Etsy listings benefit from multiple lifestyle images.",
+            "Use at least 5 product images."
           );
 
-          score = this.deductScore(score, 5);
+          this.deductScore(result, 5);
         }
         break;
 
@@ -233,13 +222,14 @@ export class ImageValidator extends BaseValidator {
      * QUALITY BONUS
      * ============================================================
      */
+
     if (
       images.length >= 5 &&
       images.length <= 8 &&
       invalidImages.length === 0 &&
       uniqueImages.size === images.length
     ) {
-      score = this.bonusScore(score, 10);
+      this.bonusScore(result, 10);
     }
 
     /**
@@ -247,18 +237,21 @@ export class ImageValidator extends BaseValidator {
      * FINAL SCORE
      * ============================================================
      */
-    result.score = this.normalizeScore(score);    /**
+
+    result.score = this.clampScore(result.score);    /**
      * ============================================================
      * TELEMETRY
      * ============================================================
      */
-    const finishedAt =
+
+    const telemetryFinished =
       this.finishTelemetry(startedAt);
 
     const telemetry =
       this.buildTelemetryReport({
+        validator: "ImageValidator",
         startedAt,
-        finishedAt: finishedAt.finishedAt,
+        finishedAt: telemetryFinished.finishedAt,
         rules: [],
       });
 
@@ -267,11 +260,14 @@ export class ImageValidator extends BaseValidator {
      * METADATA
      * ============================================================
      */
+
     const metadata =
-      this.buildMetadata(
-        finishedAt.durationMs,
-        marketplace
-      );
+      this.buildMetadata({
+        validator: "ImageValidator",
+        marketplace,
+        executionTimeMs:
+          telemetryFinished.durationMs,
+      });
 
     await this.afterValidate(
       input,
@@ -287,3 +283,5 @@ export class ImageValidator extends BaseValidator {
 }
 
 
+export default ImageValidator;
+    

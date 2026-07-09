@@ -9,6 +9,14 @@ import type { HealthCategory } from "../health.types";
 
 import type { AdapterProduct } from "@/adapters/core/adapter.contract";
 
+import type {
+  CatalogMetadata,
+} from "../base/metadata.engine";
+
+import type {
+  TelemetryReport,
+} from "../base/telemetry.engine";
+
 interface DescriptionConfig {
   minLength: number;
   maxLength: number;
@@ -48,6 +56,7 @@ export class DescriptionValidator extends BaseValidator {
   public async validate(
     input: ValidatorInput
   ): Promise<ValidatorResult> {
+
     const startedAt =
       this.startTelemetry();
 
@@ -69,62 +78,70 @@ export class DescriptionValidator extends BaseValidator {
       );
 
     const marketplace =
-      input.context.marketplace ||
-      "generic";
+      this.getMarketplace(input);
+
+    /**
+     * ============================================================
+     * DESCRIPTION REQUIRED
+     * ============================================================
+     */
 
     if (!description) {
-      result.issues.push(
-        this.critical(
-          "DESCRIPTION_MISSING",
-          "Product description is missing",
-          "Add a detailed product description"
-        )
+
+      this.critical(
+        result,
+        "DESCRIPTION_MISSING",
+        "Product description is missing",
+        "Add a detailed product description"
       );
 
-      result.score =
-        this.deductScore(
-          result.score,
-          50
-        );
+      this.deductScore(
+        result,
+        50
+      );
     }
+
+    /**
+     * ============================================================
+     * DESCRIPTION LENGTH
+     * ============================================================
+     */
 
     if (
       description &&
       description.length <
         DEFAULT_CONFIG.minLength
     ) {
-      result.issues.push(
-        this.warning(
-          "DESCRIPTION_TOO_SHORT",
-          "Description is too short",
-          "Provide more product details"
-        )
+
+      this.warning(
+        result,
+        "DESCRIPTION_TOO_SHORT",
+        "Description is too short",
+        "Provide more product details"
       );
 
-      result.score =
-        this.deductScore(
-          result.score,
-          20
-        );
+      this.deductScore(
+        result,
+        20
+      );
     }
 
     if (
       description.length >
       DEFAULT_CONFIG.maxLength
     ) {
-      result.issues.push(
-        this.warning(
-          "DESCRIPTION_TOO_LONG",
-          "Description is too long",
-          "Reduce unnecessary content"
-        )
+
+      this.warning(
+        result,
+        "DESCRIPTION_TOO_LONG",
+        "Description is too long",
+        "Reduce unnecessary content"
       );
 
-      result.score =
-        this.deductScore(
-          result.score,
-          15
-        );
+      this.deductScore(
+        result,
+        15
+      );
     }    /**
      * ============================================================
      * READABILITY
@@ -144,16 +161,16 @@ export class DescriptionValidator extends BaseValidator {
       Math.max(sentences.length, 1);
 
     if (averageWordsPerSentence > 25) {
-      result.issues.push(
-        this.warning(
-          "DESCRIPTION_LOW_READABILITY",
-          "Description is difficult to read",
-          "Use shorter sentences."
-        )
+
+      this.warning(
+        result,
+        "DESCRIPTION_LOW_READABILITY",
+        "Description is difficult to read",
+        "Use shorter sentences."
       );
 
-      result.score = this.deductScore(
-        result.score,
+      this.deductScore(
+        result,
         10
       );
     }
@@ -164,9 +181,11 @@ export class DescriptionValidator extends BaseValidator {
      * ============================================================
      */
 
-    const frequency = new Map<string, number>();
+    const frequency =
+      new Map<string, number>();
 
     for (const word of words) {
+
       const normalized =
         word.toLowerCase();
 
@@ -183,16 +202,16 @@ export class DescriptionValidator extends BaseValidator {
       );
 
     if (highestFrequency > 6) {
-      result.issues.push(
-        this.warning(
-          "DESCRIPTION_KEYWORD_STUFFING",
-          "Repeated keywords detected",
-          "Reduce repeated keyword usage."
-        )
+
+      this.warning(
+        result,
+        "DESCRIPTION_KEYWORD_STUFFING",
+        "Repeated keywords detected",
+        "Reduce repeated keyword usage."
       );
 
-      result.score = this.deductScore(
-        result.score,
+      this.deductScore(
+        result,
         20
       );
     }
@@ -213,16 +232,16 @@ export class DescriptionValidator extends BaseValidator {
       );
 
     if (hasCTA) {
-      result.issues.push(
-        this.info(
-          "DESCRIPTION_CALL_TO_ACTION",
-          "Call-to-action text detected",
-          "Avoid promotional wording for marketplace compliance."
-        )
+
+      this.info(
+        result,
+        "DESCRIPTION_CALL_TO_ACTION",
+        "Call-to-action text detected",
+        "Avoid promotional wording for marketplace compliance."
       );
 
-      result.score = this.deductScore(
-        result.score,
+      this.deductScore(
+        result,
         5
       );
     }
@@ -241,21 +260,23 @@ export class DescriptionValidator extends BaseValidator {
       ).length;
 
     if (bulletCount > 15) {
-      result.issues.push(
-        this.warning(
-          "DESCRIPTION_TOO_MANY_BULLETS",
-          "Too many bullet points detected",
-          "Keep the description concise."
-        )
+
+      this.warning(
+        result,
+        "DESCRIPTION_TOO_MANY_BULLETS",
+        "Too many bullet points detected",
+        "Keep the description concise."
       );
 
-      result.score = this.deductScore(
-        result.score,
+      this.deductScore(
+        result,
         10
       );
-    }    /**
+    }
+
+    /**
      * ============================================================
-     * MARKETPLACE SAFETY
+     * POLICY SAFETY
      * ============================================================
      */
 
@@ -268,23 +289,27 @@ export class DescriptionValidator extends BaseValidator {
       );
 
     if (hasBannedPhrase) {
-      result.issues.push(
-        this.critical(
-          "DESCRIPTION_POLICY_RISK",
-          "Potential marketplace policy violation detected",
-          "Remove prohibited marketing claims."
-        )
+
+      this.critical(
+        result,
+        "DESCRIPTION_POLICY_RISK",
+        "Potential marketplace policy violation detected",
+        "Remove prohibited marketing claims."
       );
 
-      result.score = this.deductScore(
-        result.score,
+      this.deductScore(
+        result,
         40
       );
     }
 
     /**
      * ============================================================
-     * GRAMMAR COMPLEXITY
+     * PART 3 STARTS HERE
+     * ============================================================
+     */    /**
+     * ============================================================
+     * COMPLEX LANGUAGE
      * ============================================================
      */
 
@@ -294,16 +319,16 @@ export class DescriptionValidator extends BaseValidator {
       ).length;
 
     if (longWords > 5) {
-      result.issues.push(
-        this.info(
-          "DESCRIPTION_COMPLEX_LANGUAGE",
-          "Description contains many complex words",
-          "Prefer simpler wording for readability."
-        )
+
+      this.info(
+        result,
+        "DESCRIPTION_COMPLEX_LANGUAGE",
+        "Description contains many complex words",
+        "Prefer simpler wording for readability."
       );
 
-      result.score = this.deductScore(
-        result.score,
+      this.deductScore(
+        result,
         5
       );
     }
@@ -319,30 +344,21 @@ export class DescriptionValidator extends BaseValidator {
       description.length >= 200 &&
       description.length <= 2000
     ) {
-      result.score = this.bonusScore(
-        result.score,
-        5
-      );
+      this.bonusScore(result, 5);
     }
 
     if (
       marketplace === "shopify" &&
       description.length >= 150
     ) {
-      result.score = this.bonusScore(
-        result.score,
-        5
-      );
+      this.bonusScore(result, 5);
     }
 
     if (
       marketplace === "etsy" &&
       description.length >= 100
     ) {
-      result.score = this.bonusScore(
-        result.score,
-        5
-      );
+      this.bonusScore(result, 5);
     }
 
     /**
@@ -357,10 +373,7 @@ export class DescriptionValidator extends BaseValidator {
       description.length >= 150 &&
       description.length <= 1200
     ) {
-      result.score = this.bonusScore(
-        result.score,
-        10
-      );
+      this.bonusScore(result, 10);
     }
 
     /**
@@ -370,33 +383,45 @@ export class DescriptionValidator extends BaseValidator {
      */
 
     result.score =
-      this.normalizeScore(
-        result.score
-      );
+      this.normalizeScore(result.score);
+
+    /**
+     * ============================================================
+     * TELEMETRY
+     * ============================================================
+     */
 
     const finishedAt =
-      this.finishTelemetry(
-        startedAt
-      );
+      this.finishTelemetry(startedAt);
 
-    const telemetry =
+    const telemetry: TelemetryReport =
       this.buildTelemetryReport({
+        validator: "DescriptionValidator",
         startedAt,
-        finishedAt:
-          finishedAt.finishedAt,
+        finishedAt: finishedAt.finishedAt,
         rules: [],
       });
 
-    const metadata =
-      this.buildMetadata(
-        finishedAt.durationMs,
-        marketplace
-      );
+    /**
+     * ============================================================
+     * METADATA
+     * ============================================================
+     */
+
+    const metadata: CatalogMetadata =
+      this.buildMetadata({
+        validator: "DescriptionValidator",
+        marketplace,
+        executionTimeMs:
+          finishedAt.durationMs,
+      });
 
     await this.afterValidate(
       input,
       result
-    );    return {
+    );
+
+    return {
       ...result,
       metadata,
       telemetry,
@@ -406,8 +431,8 @@ export class DescriptionValidator extends BaseValidator {
 
 /**
  * ============================================================
- * SINGLETON EXPORT
+ * EXPORT
  * ============================================================
  */
-export const descriptionValidator =
-  new DescriptionValidator();
+
+export default DescriptionValidator;

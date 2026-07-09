@@ -1,13 +1,30 @@
 import { BaseValidator } from "../base/base-validator";
 
+import type { AdapterProduct } from "@/adapters/core/adapter.contract";
+
+import type {
+  HealthCategory,
+} from "../health.types";
+
 import type {
   ValidatorInput,
   ValidatorResult,
 } from "../base/validator.types";
 
-import type { HealthCategory } from "../health.types";
+import type {
+  CatalogMetadata,
+} from "../base/metadata.engine";
 
-import type { AdapterProduct } from "@/adapters/core/adapter.contract";
+import type {
+  TelemetryReport,
+} from "../base/telemetry.engine";
+
+/**
+ * ============================================================
+ * CONVERTLISTER
+ * Enterprise Category Validator
+ * ============================================================
+ */
 
 const AMAZON_ALLOWED = [
   "electronics",
@@ -48,325 +65,280 @@ const CATEGORY_SPAM_PATTERNS = [
 ] as const;
 
 export class CategoryValidator extends BaseValidator {
-  public readonly category: HealthCategory = "CATEGORY";
-
-  public constructor() {
-    super();
-  }
+  public readonly category: HealthCategory =
+    "CATEGORY";
 
   public async validate(
     input: ValidatorInput
   ): Promise<ValidatorResult> {
-    const startedAt = this.startTelemetry();
 
-    await this.beforeValidate(input);
+    const startedAt =
+      this.startTelemetry();
 
-    const result = this.emptyResult();
+    const result =
+      this.emptyResult();
 
     const product: AdapterProduct =
       input.product;
 
-    const category = this.normalizeText(
-      String(
-        product.category ??
-        product.metadata?.category ??
-        ""
-      )
+    const category =
+      this.normalizeCategory(
+        String(
+          product.category ??
+          product.metadata?.category ??
+          ""
+        )
+      ).toLowerCase();
+
+    const marketplace = String(
+      product.marketplace ??
+      product.metadata?.marketplace ??
+      input.context.marketplace ??
+      "generic"
     ).toLowerCase();
 
-    const marketplace =
-      input.context.marketplace || "generic";
-
     /**
-     * ==========================================
+     * ======================================================
+     * PART 2 STARTS HERE
+     * ======================================================
+     */    /**
+     * ======================================================
      * CATEGORY REQUIRED
-     * ==========================================
+     * ======================================================
      */
 
     if (!category) {
-      result.issues.push(
-        this.critical(
-          "CATEGORY_MISSING",
-          "Product category is missing",
-          "Assign a valid marketplace category"
-        )
+      this.critical(
+        result,
+        "CATEGORY_MISSING",
+        "Product category is missing",
+        "Assign a valid marketplace category."
       );
 
-      result.score = this.deductScore(
-        result.score,
-        50
-      );
+      result.score = 0;
+
+      return result;
     }
 
     /**
-     * ==========================================
+     * ======================================================
      * CATEGORY LENGTH
-     * ==========================================
+     * ======================================================
      */
 
-    if (
-      category &&
-      category.length < 3
-    ) {
-      result.issues.push(
-        this.warning(
-          "CATEGORY_TOO_SHORT",
-          "Category name too short",
-          "Use a more descriptive category"
-        )
+    if (category.length < 3) {
+      this.warning(
+        result,
+        "CATEGORY_TOO_SHORT",
+        "Category name is too short",
+        "Use a more descriptive category."
       );
 
-      result.score = this.deductScore(
-        result.score,
-        10
-      );
+      this.deductScore(result, 10);
     }
 
-    if (
-      category &&
-      category.length > 50
-    ) {
-      result.issues.push(
-        this.warning(
-          "CATEGORY_TOO_LONG",
-          "Category name too long",
-          "Use standardized category names"
-        )
+    if (category.length > 50) {
+      this.warning(
+        result,
+        "CATEGORY_TOO_LONG",
+        "Category name is too long",
+        "Use a standardized marketplace category."
       );
 
-      result.score = this.deductScore(
-        result.score,
-        10
-      );
+      this.deductScore(result, 10);
     }
 
     /**
-     * ==========================================
+     * ======================================================
      * INVALID CHARACTERS
-     * ==========================================
+     * ======================================================
      */
 
-    const hasInvalidChars =
-      /[^a-z0-9\s&-]/i.test(category);
-
-    if (
-      category &&
-      hasInvalidChars
-    ) {
-      result.issues.push(
-        this.warning(
-          "CATEGORY_INVALID_CHARS",
-          "Category contains invalid characters",
-          "Use marketplace-safe category names"
-        )
+    if (/[^a-z0-9\s&/-]/i.test(category)) {
+      this.warning(
+        result,
+        "CATEGORY_INVALID_CHARACTERS",
+        "Category contains unsupported characters",
+        "Remove unsupported symbols."
       );
 
-      result.score = this.deductScore(
-        result.score,
-        15
-      );
-    }    /**
-     * ==========================================
-     * AMAZON CATEGORY VALIDATION
-     * ==========================================
+      this.deductScore(result, 15);
+    }
+
+    /**
+     * ======================================================
+     * PART 3 STARTS HERE
+     * ======================================================
+     */    /**
+     * ======================================================
+     * AMAZON CATEGORY RULES
+     * ======================================================
      */
 
     if (
       marketplace === "amazon" &&
-      category &&
       !AMAZON_ALLOWED.includes(
         category as (typeof AMAZON_ALLOWED)[number]
       )
     ) {
-      result.issues.push(
-        this.warning(
-          "AMAZON_CATEGORY_MISMATCH",
-          "Category is not optimized for Amazon.",
-          "Use an Amazon-supported category."
-        )
+      this.warning(
+        result,
+        "AMAZON_CATEGORY_MISMATCH",
+        "Category is not recognized by Amazon.",
+        "Use an Amazon-supported category."
       );
 
-      result.score = this.deductScore(
-        result.score,
-        20
-      );
+      this.deductScore(result, 20);
     }
 
     /**
-     * ==========================================
-     * SHOPIFY CATEGORY VALIDATION
-     * ==========================================
+     * ======================================================
+     * SHOPIFY CATEGORY RULES
+     * ======================================================
      */
 
     if (
       marketplace === "shopify" &&
-      category &&
       !SHOPIFY_ALLOWED.includes(
         category as (typeof SHOPIFY_ALLOWED)[number]
       )
     ) {
-      result.issues.push(
-        this.info(
-          "SHOPIFY_CATEGORY_MISMATCH",
-          "Category is not aligned with Shopify taxonomy.",
-          "Use Shopify standard product taxonomy."
-        )
+      this.info(
+        result,
+        "SHOPIFY_CATEGORY_MISMATCH",
+        "Category is outside Shopify taxonomy.",
+        "Use Shopify standard taxonomy."
       );
 
-      result.score = this.deductScore(
-        result.score,
-        10
-      );
+      this.deductScore(result, 10);
     }
 
     /**
-     * ==========================================
-     * ETSY CATEGORY VALIDATION
-     * ==========================================
+     * ======================================================
+     * ETSY CATEGORY RULES
+     * ======================================================
      */
 
     if (
       marketplace === "etsy" &&
-      category &&
       !ETSY_ALLOWED.includes(
         category as (typeof ETSY_ALLOWED)[number]
       )
     ) {
-      result.issues.push(
-        this.info(
-          "ETSY_CATEGORY_MISMATCH",
-          "Category is not aligned with Etsy taxonomy.",
-          "Choose an Etsy marketplace category."
-        )
+      this.info(
+        result,
+        "ETSY_CATEGORY_MISMATCH",
+        "Category is outside Etsy taxonomy.",
+        "Choose an Etsy marketplace category."
       );
 
-      result.score = this.deductScore(
-        result.score,
-        10
-      );
+      this.deductScore(result, 10);
     }
 
     /**
-     * ==========================================
-     * GENERIC CATEGORY BONUS
-     * ==========================================
-     */
-
-    if (
-      category &&
-      category.length >= 5 &&
-      category.length <= 25
-    ) {
-      result.score = this.bonusScore(
-        result.score,
-        10
-      );
-    }    /**
-     * ==========================================
-     * CATEGORY SPAM DETECTION
-     * ==========================================
+     * ======================================================
+     * SPAM DETECTION
+     * ======================================================
      */
 
     const spamDetected =
-      CATEGORY_SPAM_PATTERNS.some((pattern) =>
+      CATEGORY_SPAM_PATTERNS.some(pattern =>
         category.includes(pattern)
       );
 
-    if (category && spamDetected) {
-      result.issues.push(
-        this.warning(
-          "CATEGORY_SPAM_DETECTED",
-          "Category contains promotional or spam keywords.",
-          "Use only the actual marketplace category."
-        )
+    if (spamDetected) {
+      this.warning(
+        result,
+        "CATEGORY_SPAM_DETECTED",
+        "Promotional words detected in category.",
+        "Use only the actual category."
       );
 
-      result.score = this.deductScore(
-        result.score,
-        20
-      );
+      this.deductScore(result, 20);
     }
 
     /**
-     * ==========================================
-     * DUPLICATE WORD DETECTION
-     * ==========================================
+     * ======================================================
+     * DUPLICATE WORDS
+     * ======================================================
      */
 
-    if (category) {
-      const words = category
-        .split(/\s+/)
-        .filter(Boolean);
+    const words = category
+      .split(/\s+/)
+      .filter(Boolean);
 
-      const uniqueWords = new Set(words);
+    if (
+      words.length > 1 &&
+      new Set(words).size !== words.length
+    ) {
+      this.warning(
+        result,
+        "CATEGORY_DUPLICATE_WORDS",
+        "Duplicate words detected.",
+        "Avoid repeating category keywords."
+      );
 
-      if (
-        words.length > 1 &&
-        uniqueWords.size < words.length
-      ) {
-        result.issues.push(
-          this.warning(
-            "CATEGORY_DUPLICATE_WORDS",
-            "Duplicate words detected in category.",
-            "Avoid repeating the same keyword."
-          )
-        );
-
-        result.score = this.deductScore(
-          result.score,
-          10
-        );
-      }
+      this.deductScore(result, 10);
     }
 
     /**
-     * ==========================================
+     * ======================================================
      * QUALITY BONUS
-     * ==========================================
+     * ======================================================
      */
 
     if (
-      category &&
       category.length >= 8 &&
       category.length <= 30 &&
       !spamDetected
     ) {
-      result.score = this.bonusScore(
-        result.score,
-        5
-      );
+      this.bonusScore(result, 10);
     }
 
+    result.score =
+      this.clampScore(result.score);
+
     /**
-     * ==========================================
-     * FINAL SCORE NORMALIZATION
-     * ==========================================
+     * ======================================================
+     * PART 4 STARTS HERE
+     * ======================================================
+     */    /**
+     * ======================================================
+     * TELEMETRY
+     * ======================================================
      */
 
-    result.score = this.normalizeScore(
-      result.score
-    );
-
-    const finishedAt =
+    const telemetryFinished =
       this.finishTelemetry(startedAt);
 
-    const telemetry =
+    const telemetry: TelemetryReport =
       this.buildTelemetryReport({
+        validator: "CategoryValidator",
         startedAt,
-        finishedAt: finishedAt.finishedAt,
+        finishedAt: telemetryFinished.finishedAt,
         rules: [],
       });
 
-    const metadata =
-      this.buildMetadata(
-        finishedAt.durationMs,
-        marketplace
-      );
+    /**
+     * ======================================================
+     * METADATA
+     * ======================================================
+     */
+
+    const metadata: CatalogMetadata =
+      this.buildMetadata({
+        validator: "CategoryValidator",
+        marketplace,
+        executionTimeMs:
+          telemetryFinished.durationMs,
+      });
 
     await this.afterValidate(
       input,
       result
-    );    return {
+    );
+
+    return {
       ...result,
       metadata,
       telemetry,
@@ -376,8 +348,8 @@ export class CategoryValidator extends BaseValidator {
 
 /**
  * ============================================================
- * SINGLETON EXPORT
+ * EXPORT
  * ============================================================
  */
-export const categoryValidator =
-  new CategoryValidator();
+
+export default CategoryValidator;

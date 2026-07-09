@@ -20,10 +20,10 @@
 
 import type {
   CatalogHealthResult,
+  HealthCategory,
   HealthIssue,
   HealthScoreBreakdown,
 } from "../health.types";
-
 import type {
   ValidatorResult,
 } from "./validator.types";
@@ -38,20 +38,22 @@ export class AggregationEngine {
    * EMPTY BREAKDOWN
    * ============================================================
    */
-  public emptyBreakdown(): HealthScoreBreakdown {
-    return {
-      title: 100,
-      description: 100,
-      price: 100,
-      image: 100,
-      category: 100,
-      brand: 100,
-      variant: 100,
-      seo: 100,
-      duplicate: 100,
-      marketplace: 100,
-    };
-  }
+  private emptyBreakdown(): HealthScoreBreakdown {
+  return {
+    title: 100,
+    description: 100,
+    price: 100,
+    image: 100,
+    category: 100,
+    brand: 100,
+    variant: 100,
+    seo: 100,
+    duplicate: 100,
+    marketplace: 100,
+    bulletPoints: 100,
+  };
+}
+
 /**
  * ============================================================
  * DEFAULT WEIGHTS
@@ -59,15 +61,37 @@ export class AggregationEngine {
  */
 private readonly weights: Readonly<HealthScoreBreakdown> = {
   title: 20,
-  description: 15,
+  description: 10,
   price: 10,
   image: 10,
   category: 10,
   brand: 5,
   variant: 10,
-  seo: 10,
+  seo: 5,
   duplicate: 5,
   marketplace: 5,
+  bulletPoints: 10,
+};
+
+/**
+ * ============================================================
+ * CATEGORY MAP
+ * ============================================================
+ */
+private readonly categoryMap: Readonly<
+  Record<HealthCategory, keyof HealthScoreBreakdown>
+> = {
+  TITLE: "title",
+  DESCRIPTION: "description",
+  PRICE: "price",
+  IMAGE: "image",
+  CATEGORY: "category",
+  BRAND: "brand",
+  VARIANT: "variant",
+  SEO: "seo",
+  DUPLICATE: "duplicate",
+  MARKETPLACE: "marketplace",
+  BULLET_POINTS: "bulletPoints",
 };
 
 /**
@@ -75,13 +99,35 @@ private readonly weights: Readonly<HealthScoreBreakdown> = {
  * BUILD BREAKDOWN
  * ============================================================
  */
-public buildBreakdown(
+
+  public buildBreakdown(
   partial: Partial<HealthScoreBreakdown>
 ): HealthScoreBreakdown {
   return {
     ...this.emptyBreakdown(),
     ...partial,
   };
+}
+
+public buildBreakdownFromResults(
+  results: ReadonlyArray<ValidatorResult>
+): HealthScoreBreakdown {
+
+  const breakdown =
+    this.emptyBreakdown();
+
+  for (const result of results) {
+
+    const key =
+      this.categoryMap[
+        result.category
+      ];
+
+    breakdown[key] =
+      result.score;
+  }
+
+  return breakdown;
 }
 
 /**

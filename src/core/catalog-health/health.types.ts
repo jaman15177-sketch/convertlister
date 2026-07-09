@@ -30,8 +30,8 @@ export type HealthCategory =
   | "VARIANT"
   | "SEO"
   | "DUPLICATE"
-  | "MARKETPLACE";
-
+  | "MARKETPLACE"
+  | "BULLET_POINTS";
 /* ============================================================
  * SEVERITY
  * ============================================================ */
@@ -79,8 +79,8 @@ export interface HealthScoreBreakdown {
   seo: number;
   duplicate: number;
   marketplace: number;
+  bulletPoints: number;
 }
-
 /* ============================================================
  * VALIDATOR RESULT
  * ============================================================ */

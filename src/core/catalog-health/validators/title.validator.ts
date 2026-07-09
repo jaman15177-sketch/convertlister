@@ -1,12 +1,10 @@
-/**
- * ============================================================
- * CONVERTLISTER
- * Enterprise Catalog Health
- * Title Validator
- * ============================================================
- */
-
 import { BaseValidator } from "../base/base-validator";
+
+import type { AdapterProduct } from "@/adapters/core/adapter.contract";
+
+import type {
+  HealthCategory,
+} from "../health.types";
 
 import type {
   ValidatorInput,
@@ -14,35 +12,19 @@ import type {
 } from "../base/validator.types";
 
 import type {
-  HealthCategory,
-  ValidatorHealthResult,
-} from "../health.types";
+  CatalogMetadata,
+} from "../base/metadata.engine";
 
-const TITLE_MIN_LENGTH = 20;
-const TITLE_RECOMMENDED_MIN = 40;
-const TITLE_MAX_LENGTH = 150;
+import type {
+  TelemetryReport,
+} from "../base/telemetry.engine";
 
-const TITLE_HARD_MAX = 200;
-
-const MAX_REPEAT_WORD = 3;
-
-const SYMBOL_REGEX =
-  /[!@#$%^&*()+=\[\]{}<>\\|~`]/g;
-
-const MULTISPACE_REGEX = /\s{2,}/g;
-
-const REPEAT_CHAR_REGEX = /(.)\1{4,}/;
-
-const STOP_WORDS = new Set([
-  "the",
-  "a",
-  "an",
-  "of",
-  "for",
-  "with",
-  "to",
-  "and",
-]);
+/**
+ * ============================================================
+ * CONVERTLISTER
+ * Enterprise Title Validator
+ * ============================================================
+ */
 
 export class TitleValidator extends BaseValidator {
   public readonly category: HealthCategory = "TITLE";
@@ -51,444 +33,306 @@ export class TitleValidator extends BaseValidator {
     input: ValidatorInput
   ): Promise<ValidatorResult> {
 
+    const startedAt = this.startTelemetry();
+
     await this.beforeValidate(input);
 
-    const startedAt = this.startTelemetry();
+    const product: AdapterProduct = input.product;
 
     const result = this.emptyResult();
 
-    let score = 100;
+    const marketplace = this.getMarketplace(input);
 
     const title = this.normalizeText(
-      input.product.title
+      String(
+        product.title ??
+        product.metadata?.title ??
+        ""
+      )
     );
 
+    /**
+     * ======================================================
+     * PART 2 STARTS HERE
+     * ======================================================
+     */    /**
+     * ======================================================
+     * TITLE REQUIRED
+     * ======================================================
+     */
+
     if (!title) {
-      result.issues.push(
-        this.critical(
-          "TITLE_REQUIRED",
-          "Product title is missing.",
-          "Provide a product title."
-        )
+      this.critical(
+        result,
+        "TITLE_REQUIRED",
+        "Product title is missing.",
+        "Provide a product title."
       );
 
-      result.score = 0;
-
-      await this.afterValidate(
-        input,
-        result
-      );
-
-      return result;
-    }
-
-        /**
-     * ==========================================================
-     * TITLE LENGTH RULES
-     * ==========================================================
-     */
-
-    const length = title.length;
-
-    if (length < TITLE_MIN_LENGTH) {
-      score = this.deductScore(score, 30);
-
-      result.issues.push(
-        this.critical(
-          "TITLE_TOO_SHORT",
-          `Title has only ${length} characters.`,
-          `Increase title length to at least ${TITLE_RECOMMENDED_MIN} characters.`
-        )
-      );
-    } else if (length < TITLE_RECOMMENDED_MIN) {
-      score = this.deductScore(score, 10);
-
-      result.warnings.push(
-        this.warning(
-          "TITLE_COULD_BE_LONGER",
-          "Title is valid but shorter than recommended.",
-          `Target at least ${TITLE_RECOMMENDED_MIN} characters.`
-        )
-      );
-    }
-
-    if (length > TITLE_MAX_LENGTH) {
-      score = this.deductScore(score, 15);
-
-      result.warnings.push(
-        this.warning(
-          "TITLE_TOO_LONG",
-          `Title contains ${length} characters.`,
-          `Keep title below ${TITLE_MAX_LENGTH} characters.`
-        )
-      );
-    }
-
-    if (length > TITLE_HARD_MAX) {
-      score = this.deductScore(score, 40);
-
-      result.issues.push(
-        this.critical(
-          "TITLE_EXCEEDS_LIMIT",
-          "Title exceeds hard safety limit.",
-          `Reduce title below ${TITLE_HARD_MAX} characters.`
-        )
-      );
+      this.deductScore(result, 50);
     }
 
     /**
-     * ==========================================================
-     * WHITESPACE
-     * ==========================================================
+     * ======================================================
+     * TITLE LENGTH
+     * ======================================================
      */
 
-    if (MULTISPACE_REGEX.test(title)) {
-      score = this.deductScore(score, 3);
-
-      result.warnings.push(
-        this.warning(
-          "MULTIPLE_SPACES",
-          "Title contains repeated spaces.",
-          "Use a single space between words."
-        )
+    if (title && title.length < 10) {
+      this.warning(
+        result,
+        "TITLE_TOO_SHORT",
+        "Title is too short.",
+        "Use a more descriptive title."
       );
+
+      this.deductScore(result, 15);
+    }
+
+    if (title.length > 200) {
+      this.warning(
+        result,
+        "TITLE_TOO_LONG",
+        "Title exceeds recommended length.",
+        "Reduce unnecessary words."
+      );
+
+      this.deductScore(result, 15);
     }
 
     /**
-     * ==========================================================
-     * SPECIAL SYMBOLS
-     * ==========================================================
+     * ======================================================
+     * DUPLICATE WORDS
+     * ======================================================
      */
 
-    const symbolMatches =
-      title.match(SYMBOL_REGEX);
+    if (title) {
+      const words = title
+        .toLowerCase()
+        .split(/\s+/)
+        .filter(Boolean);
+
+      const uniqueWords = new Set(words);
+
+      if (uniqueWords.size < words.length) {
+        this.warning(
+          result,
+          "TITLE_DUPLICATE_WORDS",
+          "Duplicate words detected.",
+          "Avoid repeating the same keywords."
+        );
+
+        this.deductScore(result, 10);
+      }
+    }
+
+    /**
+     * ======================================================
+     * ALL CAPS
+     * ======================================================
+     */
 
     if (
-      symbolMatches &&
-      symbolMatches.length > 3
+      title &&
+      title === title.toUpperCase() &&
+      /[A-Z]/.test(title)
     ) {
-      score = this.deductScore(score, 5);
-
-      result.warnings.push(
-        this.warning(
-          "EXCESSIVE_SYMBOLS",
-          "Too many special symbols detected.",
-          "Use only necessary punctuation."
-        )
+      this.info(
+        result,
+        "TITLE_ALL_CAPS",
+        "Title is written in all capital letters.",
+        "Use normal title casing."
       );
+
+      this.deductScore(result, 5);
     }
 
     /**
-     * ==========================================================
-     * REPEATED CHARACTERS
-     * ==========================================================
+     * ======================================================
+     * INVALID CHARACTERS
+     * ======================================================
      */
 
-    if (REPEAT_CHAR_REGEX.test(title)) {
-      score = this.deductScore(score, 10);
-
-      result.warnings.push(
-        this.warning(
-          "REPEATED_CHARACTERS",
-          "Repeated characters detected.",
-          "Remove unnecessary repeated letters."
-        )
+    if (/[<>{}[\]|\\]/.test(title)) {
+      this.warning(
+        result,
+        "TITLE_INVALID_CHARACTERS",
+        "Invalid characters detected.",
+        "Remove unsupported symbols."
       );
-    }    /**
-     * ==========================================================
-     * WORD QUALITY RULES
-     * ==========================================================
+
+      this.deductScore(result, 10);
+    }
+
+    /**
+     * ======================================================
+     * PART 3 STARTS HERE
+     * ======================================================
+     */    /**
+     * ======================================================
+     * KEYWORD STUFFING
+     * ======================================================
      */
 
     const words = title
+      .toLowerCase()
       .split(/\s+/)
       .filter(Boolean);
 
-    const normalizedWords = words.map(word =>
-      this.normalizeKeyword(word)
-    );
-
-    /**
-     * ==========================================================
-     * DUPLICATE WORD DETECTION
-     * ==========================================================
-     */
-
     const frequency = new Map<string, number>();
 
-    for (const word of normalizedWords) {
-      if (STOP_WORDS.has(word)) {
-        continue;
-      }
-
+    for (const word of words) {
       frequency.set(
         word,
         (frequency.get(word) ?? 0) + 1
       );
     }
 
-    const repeatedWords: string[] = [];
+    const maxFrequency =
+      Math.max(0, ...frequency.values());
 
-    for (const [word, count] of frequency) {
-      if (count > MAX_REPEAT_WORD) {
-        repeatedWords.push(word);
-      }
-    }
-
-    if (repeatedWords.length > 0) {
-      score = this.deductScore(score, 15);
-
-      result.warnings.push(
-        this.warning(
-          "KEYWORD_STUFFING",
-          `Repeated keywords detected: ${repeatedWords.join(", ")}`,
-          "Reduce repeated keywords for better readability."
-        )
+    if (maxFrequency > 4) {
+      this.warning(
+        result,
+        "TITLE_KEYWORD_STUFFING",
+        "Repeated keywords detected.",
+        "Reduce keyword repetition."
       );
+
+      this.deductScore(result, 15);
     }
 
     /**
-     * ==========================================================
-     * UNIQUE WORD RATIO
-     * ==========================================================
-     */
-
-    const uniqueWords = new Set(normalizedWords);
-
-    if (
-      normalizedWords.length >= 8 &&
-      uniqueWords.size <
-        normalizedWords.length * 0.6
-    ) {
-      score = this.deductScore(score, 10);
-
-      result.warnings.push(
-        this.warning(
-          "LOW_UNIQUE_WORD_RATIO",
-          "Too many duplicated words in title.",
-          "Use more descriptive and varied wording."
-        )
-      );
-    }
-
-    /**
-     * ==========================================================
-     * SINGLE WORD TITLE
-     * ==========================================================
-     */
-
-    if (words.length < 2) {
-      score = this.deductScore(score, 25);
-
-      result.issues.push(
-        this.critical(
-          "TITLE_TOO_SIMPLE",
-          "Title contains too few words.",
-          "Use a descriptive product title."
-        )
-      );
-    }
-
-    /**
-     * ==========================================================
-     * ALL CAPS DETECTION
-     * ==========================================================
+     * ======================================================
+     * AMAZON
+     * ======================================================
      */
 
     if (
-      title === title.toUpperCase() &&
-      title.length > 10
+      marketplace === "amazon" &&
+      title.length < 80
     ) {
-      score = this.deductScore(score, 8);
-
-      result.warnings.push(
-        this.warning(
-          "ALL_CAPS_TITLE",
-          "Entire title is uppercase.",
-          "Use normal title capitalization."
-        )
+      this.info(
+        result,
+        "AMAZON_SHORT_TITLE",
+        "Amazon titles usually perform better when more descriptive.",
+        "Consider using 80–150 characters."
       );
     }
 
     /**
-     * ==========================================================
-     * VERY SHORT WORD COVERAGE
-     * ==========================================================
-     */
-
-    const tinyWords = words.filter(
-      word => word.length <= 2
-    );
-
-    if (
-      words.length >= 6 &&
-      tinyWords.length >
-        words.length * 0.5
-    ) {
-      score = this.deductScore(score, 5);
-
-      result.warnings.push(
-        this.warning(
-          "LOW_INFORMATION_TITLE",
-          "Title contains too many very short words.",
-          "Use more meaningful descriptive words."
-        )
-      );
-    }    /**
-     * ==========================================================
-     * READABILITY & QUALITY RULES
-     * ==========================================================
-     */
-
-    const alphaCount =
-      (title.match(/[A-Za-z]/g) ?? []).length;
-
-    const digitCount =
-      (title.match(/\d/g) ?? []).length;
-
-    const punctuationCount =
-      (title.match(/[.,;:()/\-]/g) ?? []).length;
-
-    /**
-     * ==========================================================
-     * LETTER COVERAGE
-     * ==========================================================
-     */
-
-    if (alphaCount < 5) {
-      score = this.deductScore(score, 20);
-
-      result.issues.push(
-        this.critical(
-          "LOW_ALPHA_CONTENT",
-          "Title contains too few alphabetic characters.",
-          "Use a descriptive product title."
-        )
-      );
-    }
-
-    /**
-     * ==========================================================
-     * EXCESSIVE NUMBERS
-     * ==========================================================
+     * ======================================================
+     * SHOPIFY
+     * ======================================================
      */
 
     if (
-      digitCount > 0 &&
-      digitCount > alphaCount
+      marketplace === "shopify" &&
+      title.length > 70
     ) {
-      score = this.deductScore(score, 8);
+      this.info(
+        result,
+        "SHOPIFY_LONG_TITLE",
+        "Title may be too long for Shopify themes.",
+        "Keep titles concise."
+      );
 
-      result.warnings.push(
-        this.warning(
-          "TOO_MANY_NUMBERS",
-          "Title contains excessive numeric content.",
-          "Keep numbers only when they describe the product."
-        )
+      this.deductScore(result, 5);
+    }
+
+    /**
+     * ======================================================
+     * ETSY
+     * ======================================================
+     */
+
+    if (
+      marketplace === "etsy" &&
+      title.length < 30
+    ) {
+      this.info(
+        result,
+        "ETSY_SHORT_TITLE",
+        "Consider a more descriptive Etsy title.",
+        "Include searchable keywords."
       );
     }
 
     /**
-     * ==========================================================
-     * EXCESSIVE PUNCTUATION
-     * ==========================================================
+     * ======================================================
+     * QUALITY BONUS
+     * ======================================================
      */
 
-    if (punctuationCount > 10) {
-      score = this.deductScore(score, 5);
-
-      result.warnings.push(
-        this.warning(
-          "EXCESSIVE_PUNCTUATION",
-          "Too much punctuation detected.",
-          "Simplify title formatting."
-        )
-      );
+    if (
+      title.length >= 40 &&
+      title.length <= 120 &&
+      maxFrequency <= 2
+    ) {
+      this.bonusScore(result, 10);
     }
 
     /**
-     * ==========================================================
-     * SPAM PHRASES
-     * ==========================================================
+     * ======================================================
+     * FINAL SCORE
+     * ======================================================
      */
 
-    const spamPhrases = [
-      "best price",
-      "cheap",
-      "free shipping",
-      "guaranteed",
-      "100% free",
-      "limited offer",
-      "buy now",
-    ];
-
-    const normalizedTitle =
-      this.normalizeKeyword(title);
-
-    const detectedSpam =
-      spamPhrases.filter(phrase =>
-        normalizedTitle.includes(phrase)
-      );
-
-    if (detectedSpam.length > 0) {
-      score = this.deductScore(score, 12);
-
-      result.warnings.push(
-        this.warning(
-          "SPAM_LANGUAGE",
-          `Marketing phrases detected: ${detectedSpam.join(", ")}`,
-          "Avoid promotional wording inside product titles."
-        )
-      );
-    }
+    result.score =
+      this.normalizeScore(result.score);
 
     /**
-     * ==========================================================
-     * LEADING / TRAILING PUNCTUATION
-     * ==========================================================
+     * ======================================================
+     * PART 4 STARTS HERE
+     * ======================================================
+     */    /**
+     * ======================================================
+     * TELEMETRY
+     * ======================================================
      */
 
-    if (/^[^\w]+/.test(title) || /[^\w]+$/.test(title)) {
-      score = this.deductScore(score, 4);
-
-      result.warnings.push(
-        this.warning(
-          "EDGE_PUNCTUATION",
-          "Title starts or ends with punctuation.",
-          "Remove unnecessary leading or trailing symbols."
-        )
-      );
-    }
-
-    /**
-     * ==========================================================
-     * WORD COUNT
-     * ==========================================================
-     */
-
-    if (words.length > 30) {
-      score = this.deductScore(score, 8);
-
-      result.warnings.push(
-        this.warning(
-          "EXCESSIVE_WORD_COUNT",
-          "Title contains too many words.",
-          "Keep the title concise while remaining descriptive."
-        )
-      );
-    }    result.score =
-      this.normalizeScore(score);
-
-    const telemetry =
+    const telemetryFinished =
       this.finishTelemetry(startedAt);
 
-    void telemetry;
+    const telemetry: TelemetryReport =
+      this.buildTelemetryReport({
+        validator: "TitleValidator",
+        startedAt,
+        finishedAt: telemetryFinished.finishedAt,
+        rules: [],
+      });
+
+    /**
+     * ======================================================
+     * METADATA
+     * ======================================================
+     */
+
+    const metadata: CatalogMetadata =
+      this.buildMetadata({
+        validator: "TitleValidator",
+        marketplace,
+        executionTimeMs:
+          telemetryFinished.durationMs,
+      });
 
     await this.afterValidate(
       input,
       result
     );
 
-    return result;
+    return {
+      ...result,
+      metadata,
+      telemetry,
+    };
   }
 }
+
+/**
+ * ============================================================
+ * EXPORT
+ * ============================================================
+ */
+
+export default TitleValidator;
