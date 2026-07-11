@@ -1,9 +1,0 @@
-import type { AdapterProduct } from "@/adapters/core/adapter.contract";
-
-export interface Repository<T> {
-  add(item: T): void;
-
-  get(id: string): T | undefined;
-
-  has(id: string): boolean;
-
