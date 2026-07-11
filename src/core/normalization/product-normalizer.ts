@@ -27,18 +27,21 @@ export class ProductNormalizer {
   static normalize(input: RawProduct, source: string): AdapterProduct {
     return {
       id: input.id,
-      title: (input.title || "").trim(),
+      title: String(input.title ?? "").trim(),
 
-      price: Number(input.price || 0),
-      currency: input.currency || "USD",
-      source,
+      price: Number.isFinite(Number(input.price))
+  ? Number(input.price)
+  : 0,
+      currency: String(input.currency ?? "USD").toUpperCase(),
+      source: source.toLowerCase(),
 
       // 🔥 critical normalization fix (images standardization)
-      images: Array.isArray(input.images)
-        ? input.images
-        : input.image
-          ? [input.image]
-          : [],
+      
+          images: Array.isArray(input.images)
+  ? input.images.filter(Boolean)
+  : input.image
+    ? [input.image]
+    : [],
 
       metadata: {
         // preserve full raw payload for debugging / AI learning

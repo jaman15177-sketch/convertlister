@@ -1,0 +1,70 @@
+import { UniversalStore } from "@/lib/core/store/universal-store";
+import type { AdapterProduct } from "@/adapters/core/adapter.contract";
+import type { ProductRepository as ProductRepositoryContract } from "./repository.interface";
+
+const store = new UniversalStore<AdapterProduct>();
+
+export class ProductRepository implements ProductRepositoryContract {
+
+  add(product: AdapterProduct): AdapterProduct {
+    store.set(product.id, product);
+    return product;
+  }
+
+  upsert(product: AdapterProduct): AdapterProduct {
+    const existing = store.get(product.id);
+
+    if (existing) {
+      const merged: AdapterProduct = {
+        ...existing,
+        ...product,
+      };
+upsertMany(
+  products: AdapterProduct[]
+): AdapterProduct[] {
+
+  const results: AdapterProduct[] = [];
+
+  for (const product of products) {
+    results.push(this.upsert(product));
+  }
+
+  return results;
+}
+      store.set(product.id, merged);
+
+      return merged;
+    }
+
+    store.set(product.id, product);
+
+    return product;
+  }
+
+  get(id: string): AdapterProduct | undefined {
+    return store.get(id);
+  }
+
+  has(id: string): boolean {
+    return store.has(id);
+  }
+
+  remove(id: string): boolean {
+    return store.delete(id);
+  }
+
+  getAll(): AdapterProduct[] {
+    return store.values();
+  }
+
+  count(): number {
+    return store.size();
+  }
+
+  clear(): void {
+    store.clear();
+  }
+
+}
+
+export const productRepository = new ProductRepository();

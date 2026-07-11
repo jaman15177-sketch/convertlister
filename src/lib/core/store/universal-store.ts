@@ -1,12 +1,33 @@
-export class UniversalStore {
-  private store = new Map<string, unknown>();
+/**
+ * ==========================================================
+ * UNIVERSAL STORE
+ * ==========================================================
+ *
+ * Generic in-memory storage abstraction.
+ *
+ * Responsibilities:
+ * - Generic key/value storage
+ * - Type-safe access
+ * - Reusable by any repository
+ *
+ * Used by:
+ * - Product Repository
+ * - User Repository (future)
+ * - Organization Repository (future)
+ * - Snapshot Repository (future)
+ *
+ * ==========================================================
+ */
 
-  set(key: string, value: unknown): void {
+export class UniversalStore<T> {
+  private store = new Map<string, T>();
+
+  set(key: string, value: T): void {
     this.store.set(key, value);
   }
 
-  get<T = unknown>(key: string): T | undefined {
-    return this.store.get(key) as T | undefined;
+  get(key: string): T | undefined {
+    return this.store.get(key);
   }
 
   has(key: string): boolean {
@@ -22,12 +43,14 @@ export class UniversalStore {
   }
 
   keys(): string[] {
-    return [...this.store.keys()];
+    return Array.from(this.store.keys());
   }
 
-  values(): unknown[] {
-    return [...this.store.values()];
+  values(): T[] {
+    return Array.from(this.store.values());
+  }
+
+  size(): number {
+    return this.store.size;
   }
 }
-
-export const universalStore = new UniversalStore();
