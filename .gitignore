@@ -58,3 +58,16 @@ Thumbs.db
 .cache
 .vercel
 *.tsbuildinfo
+# Archives
+*.tar
+*.tar.gz
+*.zip
+*.7z
+*.rar
+
+# Backup files
+*.save
+*.bak
+*.old
+
+
