@@ -1,74 +1,83 @@
-import type { AdapterProduct } from "@/adapters/core/adapter.contract";
-import type { RawProduct } from "@/core/normalization/product-normalizer";
+/**
+ * ==========================================================
+ * IMPORT CONTRACT
+ * ==========================================================
+ *
+ * Enterprise Import Engine Contract
+ *
+ * Responsibilities
+ * - Import pipeline contract
+ * - Async execution
+ * - Multi-tenant support
+ *
+ * Rules
+ * - Interface only
+ * - No implementation
+ * - No business logic
+ * ==========================================================
+ */
 
 import type {
-  ImportJob,
-  ImportProgress,
+  AdapterProduct,
+} from "@/adapters/core/adapter.contract";
+
+import type {
+  RawProduct,
+} from "@/core/normalization/product-normalizer";
+
+import type {
   ImportRequest,
   ImportResult,
   ImportSource,
 } from "./import.types";
 
-/**
- * ==========================================================
- * IMPORT CONTRACTS
- * ==========================================================
- * Public contracts for the Import subsystem.
- *
- * Rules
- * - Interfaces only
- * - No business logic
- * - No infrastructure code
- * - No queue implementation
+/* ==========================================================
+ * IMPORT ENGINE CONTRACT
  * ==========================================================
  */
 
-/* ==========================================================
- * IMPORT ADAPTER
- * ========================================================== */
-
-export interface ImportAdapter {
-  readonly source: ImportSource;
-
-  fetchProducts(payload?: unknown): Promise<unknown[]>;
-}
-
-/* ==========================================================
- * IMPORT VALIDATOR
- * ========================================================== */
-
-export interface ImportValidator {
-  validate(request: ImportRequest): void;
-}
-
-/* ==========================================================
- * IMPORT ENGINE
- * ========================================================== */
-
 export interface ImportEngineContract {
-  execute(
-    request: ImportRequest
-  ): ImportResult;
 
+  /**
+   * Import a single product.
+   */
   executeSingle(
     product: RawProduct,
-    source: ImportSource
-  ): AdapterProduct;
-}
-
-/* ==========================================================
- * IMPORT SERVICE
- * ========================================================== */
-
-export interface ImportService {
-  import(request: ImportRequest): Promise<ImportResult>;
-
-  importSingle(
-    product: unknown,
-    source: ImportSource
+    source: ImportSource,
+    organizationId: string
   ): Promise<AdapterProduct>;
 
-  createJob(request: ImportRequest): Promise<ImportJob>;
+  /**
+   * Import a complete request.
+   */
+  execute(
+    request: ImportRequest
+  ): Promise<ImportResult>;
 
-  getJob(jobId: string): Promise<ImportJob | null>;
+}
+/**
+ * ==========================================================
+ * IMPORT SERVICE CONTRACT
+ * ==========================================================
+ */
+
+export interface ImportService {
+
+  import(
+    request: ImportRequest
+  ): Promise<ImportResult>;
+
+}
+/**
+ * ==========================================================
+ * IMPORT VALIDATOR CONTRACT
+ * ==========================================================
+ */
+
+export interface ImportValidator {
+
+  validate(
+    request: ImportRequest
+  ): void;
+
 }

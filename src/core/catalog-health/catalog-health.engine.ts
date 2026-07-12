@@ -23,7 +23,8 @@ import type {
 } from "./base/validator.types";
 
 import type { AdapterProduct } from "@/adapters/core/adapter.contract";
-
+import { universalStore }
+from "@/lib/core/store/universal.store";
 import { TitleValidator } from "./validators/title.validator";
 import { DescriptionValidator } from "./validators/description.validator";
 import { BulletPointValidator } from "./validators/bullet-point.validator";

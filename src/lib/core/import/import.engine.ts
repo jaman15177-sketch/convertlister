@@ -1,7 +1,10 @@
 import { ProductNormalizer } from "@/core/normalization/product-normalizer";
 import type { RawProduct } from "@/core/normalization/product-normalizer";
 import type { AdapterProduct } from "@/adapters/core/adapter.contract";
-import { productRepository } from "@/lib/core/repository/product.repository";
+import { ImportMapper } from "./import.mapper";
+
+import { universalStoreRegistry }
+from "@/lib/core/store/universal.store.registry";
 import { importValidator } from "./import.validator";
 import { DEFAULT_IMPORT_BATCH_SIZE } from "./import.constants";
 import type { ImportEngineContract } from "./import.contract";
@@ -14,19 +17,45 @@ import type {
 } from "./import.types";
 
 export class ImportEngine implements ImportEngineContract {
-  executeSingle(
-    product: RawProduct,
-    source: ImportSource
-  ): AdapterProduct {
-    const normalized = ProductNormalizer.normalize(product, source);
-    return productRepository.upsert(normalized);
-  }
+  async executeSingle(
+  product: RawProduct,
+  source: ImportSource,
+  organizationId: string
+): Promise<AdapterProduct> {
 
-  execute(request: ImportRequest): ImportResult {
-    importValidator.validate(request);
+  const normalized =
+    ProductNormalizer.normalize(
+      product,
+      source
+    );
 
-    const batchSize =
-      request.options?.batchSize ?? DEFAULT_IMPORT_BATCH_SIZE;
+  const entity =
+    ImportMapper.toEntity(
+      normalized
+    );
+
+  const store =
+  universalStoreRegistry.get(
+    organizationId
+  );
+
+  await store.upsert(
+    entity
+  );
+
+  return normalized;
+
+}
+
+  async execute(
+  request: ImportRequest
+): Promise<ImportResult> {
+
+  importValidator.validate(request);
+
+  const batchSize =
+    request.options?.batchSize ??
+    DEFAULT_IMPORT_BATCH_SIZE;
 
     const statistics: ImportStatistics = {
       total: request.products.length,
@@ -51,10 +80,12 @@ export class ImportEngine implements ImportEngineContract {
 
       for (const raw of batch) {
         try {
-          const saved = this.executeSingle(
-            raw as RawProduct,
-            request.source
-          );
+          const saved =
+  await this.executeSingle(
+    raw as RawProduct,
+    request.source,
+    request.organizationId
+  );
           products.push(saved);
           statistics.imported++;
         } catch (error) {

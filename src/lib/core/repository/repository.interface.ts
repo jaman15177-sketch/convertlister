@@ -1,23 +1,103 @@
-import type { AdapterProduct } from "@/adapters/core/adapter.contract";
+/**
+ * ==========================================================
+ * REPOSITORY INTERFACE
+ * ==========================================================
+ *
+ * Enterprise Repository Contract (V2)
+ *
+ * Responsibilities
+ * - Generic CRUD abstraction
+ * - Async persistence contract
+ * - Shared repository API
+ *
+ * No implementation
+ * No business logic
+ * No infrastructure
+ * ==========================================================
+ */
 
-export interface ProductRepository {
-  add(product: AdapterProduct): AdapterProduct;
+import type {
+  UniversalEntity,
+  UniversalQuery,
+  UniversalStoreResult,
+} from "../store/universal.types";
 
-  upsert(product: AdapterProduct): AdapterProduct;
+/* ==========================================================
+ * REPOSITORY
+ * ==========================================================
+ */
 
-  upsertMany(
-    products: AdapterProduct[]
-  ): AdapterProduct[];
+export interface Repository<T> {
 
-  get(id: string): AdapterProduct | undefined;
+  /**
+   * Create entity
+   */
+  create(
+    entity: UniversalEntity<T>
+  ): Promise<
+    UniversalStoreResult<
+      UniversalEntity<T>
+    >
+  >;
 
-  has(id: string): boolean;
+  /**
+   * Update entity
+   */
+  update(
+    entity: UniversalEntity<T>
+  ): Promise<
+    UniversalStoreResult<
+      UniversalEntity<T>
+    >
+  >;
 
-  remove(id: string): boolean;
+  /**
+   * Create or Update
+   */
+  upsert(
+    entity: UniversalEntity<T>
+  ): Promise<
+    UniversalStoreResult<
+      UniversalEntity<T>
+    >
+  >;
 
-  getAll(): AdapterProduct[];
+  /**
+   * Find by id
+   */
+  findById(
+    id: string
+  ): Promise<
+    UniversalStoreResult<
+      UniversalEntity<T>
+    >
+  >;
 
-  count(): number;
+  /**
+   * Find entities
+   */
+  find(
+    query?: UniversalQuery
+  ): Promise<
+    UniversalStoreResult<
+      readonly UniversalEntity<T>[]
+    >
+  >;
 
-  clear(): void;
+  /**
+   * Delete entity
+   */
+  delete(
+    id: string
+  ): Promise<
+    UniversalStoreResult<boolean>
+  >;
+
+  /**
+   * Check existence
+   */
+  exists(
+    id: string
+  ): Promise<boolean>;
+
 }

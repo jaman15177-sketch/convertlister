@@ -1,70 +1,76 @@
-import { UniversalStore } from "@/lib/core/store/universal-store";
-import type { AdapterProduct } from "@/adapters/core/adapter.contract";
-import type { ProductRepository as ProductRepositoryContract } from "./repository.interface";
+/**
+ * ==========================================================
+ * PRODUCT REPOSITORY
+ * ==========================================================
+ *
+ * Product repository contract.
+ *
+ * Responsibilities
+ * - Product-specific repository operations
+ * - Extend UniversalRepository
+ *
+ * Rules
+ * - No storage implementation
+ * - No business logic
+ * - No infrastructure
+ * ==========================================================
+ */
 
-const store = new UniversalStore<AdapterProduct>();
+import type {
+  AdapterProduct,
+} from "@/adapters/core/adapter.contract";
 
-export class ProductRepository implements ProductRepositoryContract {
+import type {
+  UniversalEntity,
+  UniversalStoreResult,
+} from "../store/universal.types";
 
-  add(product: AdapterProduct): AdapterProduct {
-    store.set(product.id, product);
-    return product;
-  }
+import {
+  UniversalRepository,
+} from "./universal.repository";
 
-  upsert(product: AdapterProduct): AdapterProduct {
-    const existing = store.get(product.id);
+import type {
+  ProductRepositoryFilter,
+} from "./product.repository.types";
 
-    if (existing) {
-      const merged: AdapterProduct = {
-        ...existing,
-        ...product,
-      };
+/* ==========================================================
+ * PRODUCT REPOSITORY
+ * ========================================================== */
 
-      store.set(product.id, merged);
+export abstract class ProductRepository
+  extends UniversalRepository<AdapterProduct> {
 
-      return merged;
-    }
+  /**
+   * Find by SKU
+   */
+  abstract findBySku(
+    sku: string
+  ): Promise<
+    UniversalStoreResult<
+      UniversalEntity<AdapterProduct>
+    >
+  >;
 
-    store.set(product.id, product);
+  /**
+   * Find by external marketplace id
+   */
+  abstract findByExternalId(
+    externalId: string
+  ): Promise<
+    UniversalStoreResult<
+      UniversalEntity<AdapterProduct>
+    >
+  >;
 
-    return product;
-  }
-upsertMany(
-  products: AdapterProduct[]
-): AdapterProduct[] {
+  /**
+   * Product search
+   */
+  abstract findProducts(
+    filter?: ProductRepositoryFilter
+  ): Promise<
+    UniversalStoreResult<
+      readonly UniversalEntity<AdapterProduct>[]
+    >
+  >;
 
-  const results: AdapterProduct[] = [];
-
-  for (const product of products) {
-    results.push(this.upsert(product));
-  }
-
-  return results;
 }
-  get(id: string): AdapterProduct | undefined {
-    return store.get(id);
-  }
-
-  has(id: string): boolean {
-    return store.has(id);
-  }
-
-  remove(id: string): boolean {
-    return store.delete(id);
-  }
-
-  getAll(): AdapterProduct[] {
-    return store.values();
-  }
-
-  count(): number {
-    return store.size();
-  }
-
-  clear(): void {
-    store.clear();
-  }
-
-}
-
-export const productRepository = new ProductRepository();

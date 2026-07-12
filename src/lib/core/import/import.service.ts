@@ -14,17 +14,24 @@ import {
 
 import type { ImportService } from "./import.contract";
 import { importEngine } from "./import.engine";
-
+import type {
+  RawProduct,
+} from "@/core/normalization/product-normalizer";
 export class DefaultImportService implements ImportService {
   async import(request: ImportRequest): Promise<ImportResult> {
     return importEngine.execute(request);
   }
 
   async importSingle(
-    product: unknown,
-    source: ImportSource
-  ): Promise<AdapterProduct> {
-    return importEngine.executeSingle(product as never, source);
+  product: RawProduct,
+  source: ImportSource,
+  organizationId: string
+): Promise<AdapterProduct> {
+    return importEngine.executeSingle(
+  product as never,
+  source,
+  organizationId
+);
   }
 
   async createJob(request: ImportRequest): Promise<ImportJob> {
