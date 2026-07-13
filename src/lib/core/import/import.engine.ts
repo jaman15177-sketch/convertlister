@@ -15,7 +15,9 @@ import type {
   ImportError,
   ImportSource,
 } from "./import.types";
-
+import {
+  productPersistenceService,
+} from "../persistence";
 export class ImportEngine implements ImportEngineContract {
   async executeSingle(
   product: RawProduct,
@@ -40,10 +42,20 @@ export class ImportEngine implements ImportEngineContract {
   );
 
   await store.upsert(
-    entity
-  );
+  entity
+);
 
-  return normalized;
+await productPersistenceService.persist({
+
+  organizationId,
+
+  entity,
+
+  mode: "create",
+
+});
+
+return normalized;
 
 }
 

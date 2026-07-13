@@ -24,6 +24,14 @@ import type {
 import type {
   UniversalEntity,
 } from "../store/universal.types";
+import type {
+  ProductPersistenceRequest,
+} from "../persistence";
+
+import type {
+  ImportPersistenceRequest,
+} from "./import.types";
+
 
 /* ==========================================================
  * IMPORT MAPPER
@@ -62,5 +70,27 @@ export class ImportMapper {
     };
 
   }
+/* ==========================================================
+ * TO PERSISTENCE REQUEST
+ * ==========================================================
+ */
 
+static toPersistenceRequest(
+  request: ImportPersistenceRequest
+): ProductPersistenceRequest {
+
+  return {
+
+    organizationId:
+      request.organizationId,
+
+    entity:
+      request.entity,
+
+    mode:
+      request.mode,
+
+  };
+
+}
 }

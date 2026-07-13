@@ -17,11 +17,23 @@ import { importEngine } from "./import.engine";
 import type {
   RawProduct,
 } from "@/core/normalization/product-normalizer";
+import {
+  productPersistenceService,
+} from "../persistence";
+
+import {
+  ImportMapper,
+} from "./import.mapper";
+import type {
+  ImportPersistenceRequest,
+} from "./import.types";
+
 export class DefaultImportService implements ImportService {
   async import(request: ImportRequest): Promise<ImportResult> {
     return importEngine.execute(request);
   }
-
+private readonly persistence =
+    productPersistenceService;
   async importSingle(
   product: RawProduct,
   source: ImportSource,
@@ -51,7 +63,26 @@ export class DefaultImportService implements ImportService {
   async getJob(jobId: string): Promise<ImportJob | null> {
     void jobId;
     return null;
-  }
+}
+  /* ==========================================================
+ * PERSIST IMPORT
+ * ==========================================================
+ */
+
+private async persistEntity(
+  request: ImportPersistenceRequest
+): Promise<void> {
+
+  const persistenceRequest =
+    ImportMapper.toPersistenceRequest(
+      request
+    );
+
+  await this.persistence.persist(
+    persistenceRequest
+  );
+
+}
 }
 
 export const importService = new DefaultImportService();

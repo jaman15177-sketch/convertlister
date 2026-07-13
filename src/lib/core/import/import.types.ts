@@ -1,5 +1,13 @@
 import type { AdapterProduct } from "@/adapters/core/adapter.contract";
 import type { RawProduct } from "@/core/normalization/product-normalizer";
+import type {
+  UniversalEntity,
+} from "../store/universal.types";
+
+import type {
+  PersistenceMode,
+} from "../persistence";         
+
 /**
  * ==========================================================
  * IMPORT TYPES
@@ -215,4 +223,37 @@ export interface ImportProgress {
   processed: number;
 
   percentage: number;
+}
+/* ==========================================================
+ * IMPORT → PERSISTENCE REQUEST
+ * ==========================================================
+ */
+
+export interface ImportPersistenceRequest {
+
+  readonly organizationId: string;
+
+  readonly entity:
+    UniversalEntity<AdapterProduct>;
+
+  readonly mode:
+    PersistenceMode;
+
+}
+
+/* ==========================================================
+ * IMPORT → PERSISTENCE BATCH REQUEST
+ * ==========================================================
+ */
+
+export interface ImportPersistenceBatchRequest {
+
+  readonly organizationId: string;
+
+  readonly entities:
+    readonly UniversalEntity<AdapterProduct>[];
+
+  readonly mode:
+    PersistenceMode;
+
 }
