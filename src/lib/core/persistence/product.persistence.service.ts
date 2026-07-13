@@ -108,21 +108,22 @@ export class ProductPersistenceService
 
           break;
 
-        case "update":
+                case "update": {
+
+          const updateInput =
+            ProductPersistenceMapper.toUpdateInput(
+              request.entity
+            );
 
           await supabaseProductRepository.update(
-
-  request.entity.id,
-
-  ProductPersistenceMapper.toUpdateInput(
-
-    request.entity
-
-  )
-
-);
+            request.entity.id,
+            request.organizationId,
+            updateInput
+          );
 
           break;
+
+        }
 
         case "upsert":
 

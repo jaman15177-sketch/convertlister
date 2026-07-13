@@ -50,122 +50,80 @@ export interface SupabaseProductRepositoryContract {
    * Create product
    */
   create(
-    input:
-      SupabaseProductCreateInput
-  ):
-    Promise<
-      UniversalStoreResult<
-        UniversalEntity<AdapterProduct>
-      >
-    >;
+  input: SupabaseProductCreateInput
+): Promise<
+  UniversalStoreResult<
+    UniversalEntity<AdapterProduct>
+  >
+>;
+
+findById(
+  id: string,
+  organizationId: string
+): Promise<
+  UniversalStoreResult<
+    UniversalEntity<AdapterProduct>
+  >
+>;
 
 
+  
+find(
+  query?: SupabaseProductQuery
+): Promise<
+  UniversalStoreResult<
+    readonly UniversalEntity<AdapterProduct>[]
+  >
+>;
 
-  /**
-   * Find product by id
-   */
-  findById(
-    id: string
-  ):
-    Promise<
-      UniversalStoreResult<
-        UniversalEntity<AdapterProduct>
-      >
-    >;
+update(
+  id: string,
+  organizationId: string,
+  input: SupabaseProductUpdateInput
+): Promise<
+  UniversalStoreResult<
+    UniversalEntity<AdapterProduct>
+  >
+>;
+upsert(
+  input: SupabaseProductCreateInput
+): Promise<
+  UniversalStoreResult<
+    UniversalEntity<AdapterProduct>
+  >
+>;
 
+delete(
+  id: string,
+  organizationId: string
+): Promise<
+  UniversalStoreResult<boolean>
+>;
 
+exists(
+  id: string,
+  organizationId: string
+): Promise<boolean>;
 
-  /**
-   * Find products
-   */
-  find(
-    query?:
-      SupabaseProductQuery
-  ):
-    Promise<
-      UniversalStoreResult<
-        readonly UniversalEntity<AdapterProduct>[]
-      >
-    >;
-
-
-
-    /**
-   * Update product
-   */
-  update(
-    id: string,
-    input: SupabaseProductUpdateInput
-  ):
-    Promise<
-      UniversalStoreResult<
-        UniversalEntity<AdapterProduct>
-      >
-    >;
+  
 
 
-  /**
-   * Create or update product
-   */
-  upsert(
-    input:
-      SupabaseProductCreateInput
-  ):
-    Promise<
-      UniversalStoreResult<
-        UniversalEntity<AdapterProduct>
-      >
-    >;
-
-
-
-  /**
-   * Delete product
-   */
-  delete(
-    id: string
-  ):
-    Promise<
-      UniversalStoreResult<boolean>
-    >;
-
-
-
-  /**
-   * Check existence
-   */
-  exists(
-    id: string
-  ):
-    Promise<boolean>;
-
-
-
-  /**
-   * Find by SKU
-   */
   findBySku(
-    sku: string
-  ):
-    Promise<
-      UniversalStoreResult<
-        UniversalEntity<AdapterProduct>
-      >
-    >;
+  sku: string,
+  organizationId: string
+): Promise<
+  UniversalStoreResult<
+    UniversalEntity<AdapterProduct>
+  >
+>;
 
-
-
-  /**
-   * Find by external marketplace ID
-   */
-  findByExternalId(
-    externalId: string
-  ):
-    Promise<
-      UniversalStoreResult<
-        UniversalEntity<AdapterProduct>
-      >
-    >;
-
+findByExternalId(
+  externalId: string,
+  organizationId: string
+): Promise<
+  UniversalStoreResult<
+    UniversalEntity<AdapterProduct>
+  >
+>;
 
 }

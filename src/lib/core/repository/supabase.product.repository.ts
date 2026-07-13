@@ -148,12 +148,13 @@ return {
 
 
 
-  /**
-   * FIND BY ID
-   */
-  async findById(
-    id: string
-  )
+ /**
+ * FIND BY ID
+ */
+async findById(
+  id: string,
+  organizationId: string
+)
   {
 
     try {
@@ -168,9 +169,10 @@ return {
       } =
         await supabase
           .from("products")
-          .select("*")
-          .eq("id", id)
-          .single();
+.select("*")
+.eq("id", id)
+.eq("organization_id", organizationId)
+.single();
 
 
 
@@ -315,6 +317,7 @@ return {
    */
   async update(
   id: string,
+  organizationId: string,
   input: SupabaseProductUpdateInput
 )
   {
@@ -336,10 +339,7 @@ return {
               input
             )
           )
-          .eq(
-            "id",
-            id
-          )
+          .eq("organization_id", organizationId)
           .select()
           .single();
 
@@ -441,8 +441,9 @@ return {
    * DELETE
    */
   async delete(
-    id:string
-  )
+  id: string,
+  organizationId: string
+)
   {
 
     const supabase =
@@ -455,10 +456,8 @@ return {
       await supabase
         .from("products")
         .delete()
-        .eq(
-          "id",
-          id
-        );
+.eq("id", id)
+.eq("organization_id", organizationId)
 
 
 
@@ -485,7 +484,8 @@ return {
  * Find product by SKU
  */
 async findBySku(
-  sku: string
+  sku: string,
+  organizationId: string
 ): Promise<
   UniversalStoreResult<
     UniversalEntity<AdapterProduct>
@@ -541,11 +541,12 @@ async findBySku(
 
 }
     /**
-   * Find product by external marketplace ID
-   */
-  async findByExternalId(
-    externalId: string
-  ) {
+ * Find product by external marketplace ID
+ */
+async findByExternalId(
+  externalId: string,
+  organizationId: string
+) {
 
     try {
 
@@ -596,24 +597,26 @@ async findBySku(
 
   }
 
+ 
+  
+/**
+   * EXISTS
+   */
   async exists(
-    id:string
-  )
-  {
-
+    id: string,
+    organizationId: string
+  ): Promise<boolean> {
     const result =
-      await this.findById(id);
-
+      await this.findById(
+        id,
+        organizationId
+      );
 
     return result.success;
 
   }
 
-
-
 }
-
-
 
 export const supabaseProductRepository =
   new SupabaseProductRepository();
