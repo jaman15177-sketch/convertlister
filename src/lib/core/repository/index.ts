@@ -27,10 +27,27 @@ export * from "./universal.repository";
 
 
 /* ==========================================================
- * PRODUCT REPOSITORY
+ * MEMORY PRODUCT REPOSITORY
  * ========================================================== */
 
 export * from "./product.repository";
 
 export * from "./product.repository.types";
+
 export * from "./product.repository.memory";
+
+
+
+/* ==========================================================
+ * SUPABASE PRODUCT REPOSITORY
+ * ========================================================== */
+
+export * from "./supabase.product.types";
+
+export * from "./supabase.product.contract";
+
+export * from "./supabase.product.mapper";
+
+export * from "./supabase.product.errors";
+
+export * from "./supabase.product.repository";
