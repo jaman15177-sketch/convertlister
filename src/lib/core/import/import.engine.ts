@@ -2,7 +2,9 @@ import { ProductNormalizer } from "@/core/normalization/product-normalizer";
 import type { RawProduct } from "@/core/normalization/product-normalizer";
 import type { AdapterProduct } from "@/adapters/core/adapter.contract";
 import { ImportMapper } from "./import.mapper";
-
+import {
+  CanonicalEngine,
+} from "@/lib/core/canonical";
 import { universalStoreRegistry }
 from "@/lib/core/store/universal.store.registry";
 import { importValidator } from "./import.validator";
@@ -18,33 +20,63 @@ import type {
 import {
   productPersistenceService,
 } from "../persistence";
+import {
+  ImportDuplicatePolicy,
+  ImportAction,
+} from "./import.duplicate";
+
+import {
+  ImportIdentity,
+} from "./import.identity";
 export class ImportEngine implements ImportEngineContract {
+private readonly canonicalEngine =
+    new CanonicalEngine();
   async executeSingle(
   product: RawProduct,
   source: ImportSource,
   organizationId: string
 ): Promise<AdapterProduct> {
 
-  const normalized =
-    ProductNormalizer.normalize(
-      product,
-      source
-    );
-
-  const entity =
-    ImportMapper.toEntity(
-      normalized
-    );
-
-  const store =
-  universalStoreRegistry.get(
-    organizationId
+    const normalized =
+  ProductNormalizer.normalize(
+    product,
+    source
   );
 
-  await store.upsert(
-  entity
-);
+const canonical =
+  this.canonicalEngine.execute({
+    product: normalized,
+    existingProducts: [],
+  });
 
+const identityProduct =
+  ImportIdentity.apply(
+    normalized,
+    canonical
+  );
+
+const decision =
+  ImportDuplicatePolicy.decide(
+    canonical
+  );
+
+if (decision.action === ImportAction.SKIP) {
+  return identityProduct;
+}
+
+const entity =
+  ImportMapper.toEntity(
+    identityProduct
+  );
+
+  const store =
+    universalStoreRegistry.get(
+      organizationId
+    );
+
+  await store.upsert(
+    entity
+  );
 await productPersistenceService.persist({
 
   organizationId,
