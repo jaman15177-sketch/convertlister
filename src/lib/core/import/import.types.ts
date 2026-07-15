@@ -1,4 +1,7 @@
-import type { AdapterProduct } from "@/adapters/core/adapter.contract";
+import type {
+  AdapterProduct,
+  AdapterQuery,
+} from "@/adapters/core/adapter.contract";
 import type { RawProduct } from "@/core/normalization/product-normalizer";
 import type {
   UniversalEntity,
@@ -266,4 +269,35 @@ export interface ImportQueuePayload {
   products: RawProduct[];
 
   options?: ImportOptions;
+}
+/* ==========================================================
+ * MARKETPLACE ADAPTER REQUEST
+ * ==========================================================
+ */
+
+
+
+export interface ImportAdapterRequest {
+
+  readonly source:
+    ImportSource;
+
+  readonly query:
+    AdapterQuery;
+
+}
+
+/* ==========================================================
+ * MARKETPLACE ADAPTER RESPONSE
+ * ==========================================================
+ */
+
+export interface ImportAdapterResponse {
+
+  readonly source:
+    ImportSource;
+
+  readonly products:
+    readonly AdapterProduct[];
+
 }

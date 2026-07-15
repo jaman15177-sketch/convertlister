@@ -27,11 +27,19 @@ import {
 import type {
   ImportPersistenceRequest,
 } from "./import.types";
-
+import {
+  importOrchestrator,
+} from "./import.orchestrator";
 export class DefaultImportService implements ImportService {
-  async import(request: ImportRequest): Promise<ImportResult> {
-    return importEngine.execute(request);
-  }
+  async import(
+  request: ImportRequest
+): Promise<ImportResult> {
+
+  return importOrchestrator.import(
+    request
+  );
+
+}
 private readonly persistence =
     productPersistenceService;
   async importSingle(

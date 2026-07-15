@@ -2,6 +2,7 @@ import {
   ImportMode,
   ImportSource,
   type ImportRequest,
+  type ImportAdapterRequest,
 } from "./import.types";
 
 import type {
@@ -144,7 +145,57 @@ export class DefaultImportValidator
     }
 
   }
+  /**
+   * Validate adapter request.
+   */
+  validateAdapterRequest(
+    request: ImportAdapterRequest
+  ): void {
 
+    if (
+      !Object.values(ImportSource)
+        .includes(request.source)
+    ) {
+
+      throw new Error(
+        `Unsupported adapter source: ${request.source}`
+      );
+
+    }
+
+    if (
+      !request.query.keyword.trim()
+    ) {
+
+      throw new Error(
+        "Search keyword is required."
+      );
+
+    }
+
+    if (
+      request.query.page !== undefined &&
+      request.query.page < 1
+    ) {
+
+      throw new Error(
+        "Page must be greater than zero."
+      );
+
+    }
+
+    if (
+      request.query.pageSize !== undefined &&
+      request.query.pageSize < 1
+    ) {
+
+      throw new Error(
+        "Page size must be greater than zero."
+      );
+
+    }
+
+  }
 }
 
 export const importValidator =
