@@ -9,9 +9,23 @@
  */
 
 export interface AdapterQuery {
+
   keyword: string;
+
   page?: number;
+
+  pageSize?: number;
+
+  categoryId?: string;
+
+  region?: string;
+
+  currency?: string;
+
+  language?: string;
+
   filters?: Record<string, unknown>;
+
 }
 
 /**
