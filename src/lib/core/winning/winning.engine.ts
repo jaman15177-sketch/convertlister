@@ -6,46 +6,56 @@
  * Enterprise Winning Engine
  *
  * Responsibilities
- * - Winning subsystem entry point
- * - Orchestrate detector
- * - Ranking
- * - Metrics
- * - Snapshot
+ * - Public winning execution boundary
+ * - Coordinate detector
+ * - Single and batch execution
+ * - Winner filtering
+ *
+ * Rules
+ * - No scoring logic
+ * - No rule logic
+ * - No repository
+ * - No persistence
  * ==========================================================
  */
+
 
 import type {
   NormalizedProduct,
 } from "@/core/normalization/normalizer.types";
 
+
 import type {
   WinningCandidate,
 } from "./winning.types";
+
 
 import {
   winningDetector,
 } from "./winning.detector";
 
-import {
-  winningRanking,
-  type RankedWinningCandidate,
-} from "./winning.ranking";
 
-import {
-  winningMetrics,
-  type WinningMetrics,
-} from "./winning.metrics";
 
-import {
-  winningSnapshot,
-  type WinningSnapshot,
-} from "./winning.snapshot";
+/* ==========================================================
+ * ENGINE
+ * ==========================================================
+ */
+
 
 export class WinningEngine {
+
+
+
+  /**
+   * ========================================================
+   * EXECUTE ONE
+   * ========================================================
+   */
 
   execute(
     product: NormalizedProduct
   ): WinningCandidate {
+
 
     return winningDetector.detect(
       product
@@ -53,10 +63,19 @@ export class WinningEngine {
 
   }
 
+
+
+  /**
+   * ========================================================
+   * EXECUTE MANY
+   * ========================================================
+   */
+
   executeMany(
     products:
       readonly NormalizedProduct[]
   ): readonly WinningCandidate[] {
+
 
     return winningDetector.detectMany(
       products
@@ -64,69 +83,39 @@ export class WinningEngine {
 
   }
 
+
+
+  /**
+   * ========================================================
+   * WINNERS ONLY
+   * ========================================================
+   */
+
   executeWinners(
     products:
       readonly NormalizedProduct[]
   ): readonly WinningCandidate[] {
 
+
     return this.executeMany(
       products
-    ).filter(
+    )
+    .filter(
       candidate =>
         candidate.passed
     );
 
   }
 
-  rank(
-    candidates:
-      readonly WinningCandidate[]
-  ): readonly RankedWinningCandidate[] {
-
-    return winningRanking.rank(
-      candidates
-    );
-
-  }
-
-  top(
-    candidates:
-      readonly WinningCandidate[],
-    limit = 10
-  ): readonly RankedWinningCandidate[] {
-
-    return winningRanking.top(
-      candidates,
-      limit
-    );
-
-  }
-
-  metrics(
-    candidates:
-      readonly WinningCandidate[]
-  ): WinningMetrics {
-
-    winningMetrics.start();
-
-    return winningMetrics.finish(
-      candidates
-    );
-
-  }
-
-  snapshots(
-    candidates:
-      readonly WinningCandidate[]
-  ): readonly WinningSnapshot[] {
-
-    return winningSnapshot.createMany(
-      candidates
-    );
-
-  }
 
 }
+
+
+
+/* ==========================================================
+ * SINGLETON
+ * ==========================================================
+ */
 
 export const winningEngine =
   new WinningEngine();

@@ -1,20 +1,20 @@
 /**
  * ==========================================================
- * WINNING EVENTS
+ * WINNING AUDIT
  * ==========================================================
  *
- * Enterprise Winning Domain Events
+ * Enterprise Winning Audit Trail
  *
  * Responsibilities:
- * - Define winning lifecycle events
- * - Create event payloads
- * - Enable future event-driven flow
+ * - Track winning decisions
+ * - Record detection history
+ * - Provide traceability
  *
  * Rules:
  * - No repository
  * - No persistence
  * - No API
- * - No queue execution
+ * - No mutation of products
  * ==========================================================
  */
 
@@ -27,69 +27,56 @@ import type {
 
 
 /* ==========================================================
- * EVENT TYPES
+ * AUDIT TYPES
  * ==========================================================
  */
 
-export type WinningEventType =
-  | "WINNING_DETECTED"
-  | "WINNING_ACCEPTED"
-  | "WINNING_REJECTED"
-  | "WINNING_RANKED";
+export type WinningAuditAction =
+  | "DETECTED"
+  | "ACCEPTED"
+  | "REJECTED"
+  | "RANKED";
 
 
 
-/* ==========================================================
- * EVENT STRUCTURE
- * ==========================================================
- */
-
-export interface WinningEvent {
-
+export interface WinningAuditRecord {
 
   readonly id: string;
 
-
-  readonly type:
-    WinningEventType;
-
-
   readonly candidateId: string;
-
 
   readonly productId: string;
 
+  readonly action:
+    WinningAuditAction;
 
   readonly score: number;
 
-
   readonly confidence: number;
 
-
-  readonly createdAt: Date;
-
+  readonly timestamp: Date;
 
 }
 
 
 
 /* ==========================================================
- * EVENT FACTORY
+ * AUDIT ENGINE
  * ==========================================================
  */
 
-export class WinningEventFactory {
+export class WinningAuditEngine {
 
 
 
   /**
-   * Create event
+   * Create audit record
    */
 
   static create(
     candidate: WinningCandidate,
-    type: WinningEventType
-  ): WinningEvent {
+    action: WinningAuditAction
+  ): WinningAuditRecord {
 
 
     return {
@@ -97,9 +84,6 @@ export class WinningEventFactory {
 
       id:
         crypto.randomUUID(),
-
-
-      type,
 
 
       candidateId:
@@ -110,6 +94,9 @@ export class WinningEventFactory {
         candidate.product.id,
 
 
+      action,
+
+
       score:
         candidate.score,
 
@@ -118,7 +105,7 @@ export class WinningEventFactory {
         candidate.confidence,
 
 
-      createdAt:
+      timestamp:
         new Date(),
 
 
@@ -129,22 +116,22 @@ export class WinningEventFactory {
 
 
   /**
-   * Create batch events
+   * Create batch audit
    */
 
   static createMany(
     candidates:
       readonly WinningCandidate[],
-    type: WinningEventType
+    action: WinningAuditAction
   ):
-    readonly WinningEvent[] {
+    readonly WinningAuditRecord[] {
 
 
     return candidates.map(
       candidate =>
         this.create(
           candidate,
-          type
+          action
         )
     );
 
@@ -161,5 +148,5 @@ export class WinningEventFactory {
  * ==========================================================
  */
 
-export const winningEvents =
-  WinningEventFactory;
+export const winningAudit =
+  WinningAuditEngine;

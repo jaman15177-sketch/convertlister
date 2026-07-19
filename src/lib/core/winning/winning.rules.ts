@@ -3,18 +3,15 @@
  * WINNING RULES
  * ==========================================================
  *
- * Enterprise Winning Rule Engine
+ * Enterprise Winning Rule Library
  *
  * Responsibilities
- * - Centralized scoring rules
- * - Rule weights
- * - Pure evaluation
- *
- * Rules
- * - No repository
- * - No detector
- * - No persistence
- * - Pure business rules
+ * - Evaluate independent rules
+ * - Produce rule results
+ * - No scoring
+ * - No confidence
+ * - No ranking
+ * - No detector logic
  * ==========================================================
  */
 
@@ -23,28 +20,13 @@ import type {
 } from "@/core/normalization/normalizer.types";
 
 /* ==========================================================
- * RESULT
- * ==========================================================
- */
-
-export interface WinningRuleResult {
-
-  readonly name: string;
-
-  readonly score: number;
-
-  readonly passed: boolean;
-
-  readonly reason: string;
-
-}
-
-/* ==========================================================
  * RULE
  * ==========================================================
  */
 
 export interface WinningRule {
+
+  readonly id: string;
 
   readonly name: string;
 
@@ -52,322 +34,180 @@ export interface WinningRule {
 
   evaluate(
     product: NormalizedProduct
-  ): WinningRuleResult;
+  ): boolean;
 
 }
 
 /* ==========================================================
- * RULES
+ * RULE RESULT
  * ==========================================================
  */
 
-export const winningRules:
-  readonly WinningRule[] = [
+export interface WinningRuleResult {
 
-  {
-    name: "Title",
+  readonly id: string;
 
-    weight: 10,
+  readonly name: string;
 
-    evaluate(product) {
+  readonly weight: number;
 
-      const passed =
-        product.title.trim().length >= 20;
+  readonly passed: boolean;
 
-      return {
+}
 
-        name: "Title",
+/* ==========================================================
+ * RULE LIBRARY
+ * ==========================================================
+ */
 
-        score:
-          passed ? 10 : 0,
+export class WinningRules {
 
-        passed,
+  private constructor() {}
 
-        reason:
-          passed
-            ? "Good title"
-            : "Short title",
+  static readonly rules:
+    readonly WinningRule[] = [
 
-      };
+    {
+      id: "title",
 
+      name: "Good Title",
+
+      weight: 10,
+
+      evaluate: product =>
+        product.title.trim().length >= 20,
     },
 
-  },
+    {
+      id: "description",
 
-  {
-    name: "Description",
+      name: "Good Description",
 
-    weight: 10,
+      weight: 10,
 
-    evaluate(product) {
-
-      const description =
-  product.description ?? "";
-
-const passed =
-  description
-    .trim()
-    .length >= 100;
-      return {
-
-        name: "Description",
-
-        score:
-          passed ? 10 : 0,
-
-        passed,
-
-        reason:
-          passed
-            ? "Good description"
-            : "Weak description",
-
-      };
-
+      evaluate: product =>
+        (product.description?.trim().length ?? 0) >=
+        100,
     },
 
-  },
+    {
+      id: "images",
 
-  {
-    name: "Images",
+      name: "Enough Images",
 
-    weight: 10,
+      weight: 10,
 
-    evaluate(product) {
-
-      const passed =
-        product.images.urls.length >= 3;
-
-      return {
-
-        name: "Images",
-
-        score:
-          passed ? 10 : 0,
-
-        passed,
-
-        reason:
-          passed
-            ? "Enough images"
-            : "Few images",
-
-      };
-
+      evaluate: product =>
+        product.images.urls.length >= 3,
     },
 
-  },
+    {
+      id: "price",
 
-  {
-    name: "Price",
+      name: "Valid Price",
 
-    weight: 10,
+      weight: 10,
 
-    evaluate(product) {
-
-      const passed =
-        product.price.amount > 0;
-
-      return {
-
-        name: "Price",
-
-        score:
-          passed ? 10 : 0,
-
-        passed,
-
-        reason:
-          passed
-            ? "Valid price"
-            : "Invalid price",
-
-      };
-
+      evaluate: product =>
+        product.price.amount > 0,
     },
 
-  },
+    {
+      id: "attributes",
 
-  {
-    name: "Attributes",
+      name: "Has Attributes",
 
-    weight: 10,
+      weight: 10,
 
-    evaluate(product) {
-
-      const passed =
+      evaluate: product =>
         Object.keys(
           product.attributes
-        ).length > 0;
-
-      return {
-
-        name: "Attributes",
-
-        score:
-          passed ? 10 : 0,
-
-        passed,
-
-        reason:
-          passed
-            ? "Attributes available"
-            : "No attributes",
-
-      };
-
+        ).length > 0,
     },
 
-  },
+    {
+      id: "keywords",
 
-  {
-    name: "Keywords",
+      name: "Good Keywords",
 
-    weight: 10,
+      weight: 10,
 
-    evaluate(product) {
-
-      const passed =
-        product.keywords.length >= 5;
-
-      return {
-
-        name: "Keywords",
-
-        score:
-          passed ? 10 : 0,
-
-        passed,
-
-        reason:
-          passed
-            ? "Good keywords"
-            : "Weak keywords",
-
-      };
-
+      evaluate: product =>
+        product.keywords.length >= 5,
     },
 
-  },
+    {
+      id: "brand",
 
-  {
-    name: "Brand",
+      name: "Brand",
 
-    weight: 10,
+      weight: 10,
 
-    evaluate(product) {
-
-      const passed =
-        !!product.brand;
-
-      return {
-
-        name: "Brand",
-
-        score:
-          passed ? 10 : 0,
-
-        passed,
-
-        reason:
-          passed
-            ? "Brand available"
-            : "Brand missing",
-
-      };
-
+      evaluate: product =>
+        Boolean(product.brand),
     },
 
-  },
+    {
+      id: "category",
 
-  {
-    name: "Category",
+      name: "Category",
 
-    weight: 10,
+      weight: 10,
 
-    evaluate(product) {
-
-      const passed =
-        !!product.category;
-
-      return {
-
-        name: "Category",
-
-        score:
-          passed ? 10 : 0,
-
-        passed,
-
-        reason:
-          passed
-            ? "Category available"
-            : "Category missing",
-
-      };
-
+      evaluate: product =>
+        Boolean(product.category),
     },
 
-  },
+    {
+      id: "marketplace",
 
-  {
-    name: "Marketplace",
+      name: "Marketplace",
 
-    weight: 10,
+      weight: 10,
 
-    evaluate(product) {
-
-      const passed =
-        !!product.marketplace;
-
-      return {
-
-        name: "Marketplace",
-
-        score:
-          passed ? 10 : 0,
-
-        passed,
-
-        reason:
-          passed
-            ? "Marketplace available"
-            : "Marketplace missing",
-
-      };
-
+      evaluate: product =>
+        Boolean(product.marketplace),
     },
 
-  },
+    {
+      id: "source",
 
-  {
-    name: "Source",
+      name: "Source",
 
-    weight: 10,
+      weight: 10,
 
-    evaluate(product) {
-
-      const passed =
-        !!product.source;
-
-      return {
-
-        name: "Source",
-
-        score:
-          passed ? 10 : 0,
-
-        passed,
-
-        reason:
-          passed
-            ? "Source available"
-            : "Source missing",
-
-      };
-
+      evaluate: product =>
+        Boolean(product.source),
     },
 
-  },
+  ];
 
-];
+  /* ========================================================
+   * EXECUTE
+   * ========================================================
+   */
+
+  static evaluate(
+    product: NormalizedProduct
+  ): readonly WinningRuleResult[] {
+
+    return this.rules.map(
+      rule => ({
+
+        id: rule.id,
+
+        name: rule.name,
+
+        weight: rule.weight,
+
+        passed:
+          rule.evaluate(
+            product
+          ),
+
+      })
+    );
+
+  }
+
+}

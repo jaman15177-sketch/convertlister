@@ -3,32 +3,28 @@
  * WINNING TYPES
  * ==========================================================
  *
- * Enterprise Winning Detection
- * Canonical Domain Types
+ * Enterprise Winning Detection Types
+ *
+ * Responsibilities
+ * - Core domain contracts
+ * - Winning candidate structure
+ * - Shared subsystem types
+ *
+ * Rules
+ * - No business logic
+ * - No calculation
+ * - No persistence
  * ==========================================================
  */
-
 import type {
   NormalizedProduct,
 } from "@/core/normalization/normalizer.types";
 
-import type {
-  WinningExplanation,
-} from "./winning.explanation";
-
 /* ==========================================================
- * SCORE
+ * WINNING LEVEL
  * ==========================================================
  */
 
-export type WinningScore = number;
-
-export type WinningConfidence = number;
-
-/* ==========================================================
- * LEVEL
- * ==========================================================
- */
 
 export type WinningLevel =
   | "LOW"
@@ -36,90 +32,185 @@ export type WinningLevel =
   | "HIGH"
   | "WINNER";
 
+
+
+/* ==========================================================
+ * WINNING EXPLANATION
+ * ==========================================================
+ */
+
+
+export interface WinningExplanation {
+
+  readonly summary: string;
+
+  readonly factors:
+    readonly string[];
+
+  readonly strengths:
+    readonly string[];
+
+  readonly weaknesses:
+    readonly string[];
+
+}
+
+
+
 /* ==========================================================
  * WINNING CANDIDATE
  * ==========================================================
  */
 
+
 export interface WinningCandidate {
 
   readonly id: string;
 
+
+  /**
+   * Original normalized product
+   */
+
   readonly product: NormalizedProduct;
 
-  readonly score: WinningScore;
 
-  readonly confidence: WinningConfidence;
+
+  /**
+   * Winning score
+   *
+   * 0 - 100
+   */
+
+  readonly score: number;
+
+
+
+  /**
+   * Confidence
+   *
+   * 0 - 1
+   */
+
+  readonly confidence: number;
+
+
+
+  /**
+   * Classification
+   */
 
   readonly level: WinningLevel;
 
+
+
+  /**
+   * Passed threshold
+   */
+
   readonly passed: boolean;
+
+
+
+  /**
+   * Rule reasons
+   */
 
   readonly reasons:
     readonly string[];
 
+
+
+  /**
+   * Human explanation
+   */
+
   readonly explanation:
     WinningExplanation;
+
+
+
+  /**
+   * Creation time
+   */
 
   readonly createdAt: Date;
 
 }
 
+
+
 /* ==========================================================
- * SCORE BREAKDOWN
+ * WINNING REQUEST
  * ==========================================================
  */
 
-export interface WinningScoreBreakdown {
 
-  readonly title: number;
+export interface WinningRequest {
 
-  readonly description: number;
-
-  readonly images: number;
-
-  readonly price: number;
-
-  readonly attributes: number;
-
-  readonly keywords: number;
-
-  readonly marketplace: number;
-
-  readonly source: number;
+  readonly product: unknown;
 
 }
 
+
+
 /* ==========================================================
- * ENGINE RESULT
+ * WINNING RESULT
  * ==========================================================
  */
+
 
 export interface WinningResult {
 
   readonly candidate:
     WinningCandidate;
 
-  readonly durationMs:
-    number;
-
 }
 
+
+
 /* ==========================================================
- * METRICS
+ * BATCH REQUEST
  * ==========================================================
  */
 
+
+export interface WinningBatchRequest {
+
+  readonly products:
+    readonly unknown[];
+
+}
+
+
+
+/* ==========================================================
+ * BATCH RESULT
+ * ==========================================================
+ */
+
+
+export interface WinningBatchResult {
+
+  readonly candidates:
+    readonly WinningCandidate[];
+
+}
+
+
+
+/* ==========================================================
+ * STATISTICS
+ * ==========================================================
+ */
+
+
 export interface WinningStatistics {
 
-  readonly processed: number;
+  readonly total: number;
 
   readonly winners: number;
 
-  readonly rejected: number;
-
   readonly averageScore: number;
-
-  readonly averageConfidence: number;
 
 }

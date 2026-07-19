@@ -2,6 +2,20 @@
  * ==========================================================
  * WINNING DETECTOR
  * ==========================================================
+ *
+ * Enterprise Winning Detector
+ *
+ * Responsibilities
+ * - Detection orchestration
+ * - Coordinate scoring
+ * - Build final candidate
+ *
+ * Rules
+ * - No scoring logic
+ * - No rule execution
+ * - No repository
+ * - No persistence
+ * ==========================================================
  */
 
 import type {
@@ -10,7 +24,6 @@ import type {
 
 import type {
   WinningCandidate,
-  WinningLevel,
 } from "./winning.types";
 
 import {
@@ -18,42 +31,40 @@ import {
 } from "./winning.mapper";
 
 import {
-  winningValidator,
-} from "./winning.validator";
-
-import {
   WinningScoreEngine,
 } from "./winning.score";
 
+
+/* ==========================================================
+ * DETECTOR
+ * ==========================================================
+ */
+
 export class WinningDetector {
+
+
+  /**
+   * ========================================================
+   * DETECT ONE PRODUCT
+   * ========================================================
+   */
 
   detect(
     product: NormalizedProduct
   ): WinningCandidate {
+
 
     const candidate =
       WinningMapper.toCandidate(
         product
       );
 
-    winningValidator.validate(
-      candidate
-    );
 
     const result =
       WinningScoreEngine.calculate(
         product
       );
 
-    const level:
-      WinningLevel =
-      result.score >= 90
-        ? "WINNER"
-        : result.score >= 70
-          ? "HIGH"
-          : result.score >= 40
-            ? "MEDIUM"
-            : "LOW";
 
     return {
 
@@ -65,13 +76,13 @@ export class WinningDetector {
       confidence:
         result.confidence,
 
-      level,
-
       passed:
         result.passed,
 
       reasons:
-        [...result.reasons],
+        [
+          ...result.reasons,
+        ],
 
       explanation:
         result.explanation,
@@ -80,10 +91,19 @@ export class WinningDetector {
 
   }
 
+
+
+  /**
+   * ========================================================
+   * DETECT MANY PRODUCTS
+   * ========================================================
+   */
+
   detectMany(
     products:
       readonly NormalizedProduct[]
   ): readonly WinningCandidate[] {
+
 
     return products.map(
       product =>
@@ -94,7 +114,14 @@ export class WinningDetector {
 
   }
 
+
 }
+
+
+/* ==========================================================
+ * SINGLETON
+ * ==========================================================
+ */
 
 export const winningDetector =
   new WinningDetector();

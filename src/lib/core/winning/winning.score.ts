@@ -6,7 +6,7 @@
  * Enterprise Winning Score Engine
  *
  * Responsibilities
- * - Execute winning rules
+ * - Execute rule library
  * - Aggregate score
  * - Calculate confidence
  * - Generate explanation
@@ -23,7 +23,7 @@ import type {
 } from "./winning.explanation";
 
 import {
-  winningRules,
+  WinningRules,
 } from "./winning.rules";
 
 import {
@@ -72,29 +72,28 @@ export class WinningScoreEngine {
     product: NormalizedProduct
   ): WinningScoreResult {
 
+    const results =
+      WinningRules.evaluate(
+        product
+      );
+
     let score = 0;
 
     const reasons: string[] = [];
 
     for (
-      const rule
-      of winningRules
+      const result of results
     ) {
-
-      const result =
-        rule.evaluate(
-          product
-        );
-
-      score +=
-        result.score;
 
       if (
         result.passed
       ) {
 
+        score +=
+          result.weight;
+
         reasons.push(
-          result.reason
+          result.name
         );
 
       }

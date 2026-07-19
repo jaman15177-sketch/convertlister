@@ -3,40 +3,44 @@
  * WINNING SNAPSHOT
  * ==========================================================
  *
- * Enterprise Winning Snapshot
+ * Enterprise Winning Snapshot Model
  *
  * Responsibilities
- * - Immutable winning result
- * - Audit history
- * - Export-safe snapshot
- * - Engine handoff object
+ * - Create immutable winning snapshot
+ * - Preserve detection result state
+ * - Support future Freeze Engine
+ * - Support version tracking
  *
  * Rules
- * - No repository
  * - No database
- * - No API
- * - Immutable only
+ * - No repository
+ * - No persistence
+ * - No business decision
  * ==========================================================
  */
+
 
 import type {
   WinningCandidate,
 } from "./winning.types";
 
+
+
 /* ==========================================================
- * SNAPSHOT
+ * SNAPSHOT TYPES
  * ==========================================================
  */
+
 
 export interface WinningSnapshot {
 
   readonly id: string;
 
+  readonly productId: string;
+
   readonly score: number;
 
   readonly confidence: number;
-
-  readonly level: string;
 
   readonly passed: boolean;
 
@@ -46,33 +50,44 @@ export interface WinningSnapshot {
   readonly explanation:
     WinningCandidate["explanation"];
 
+  readonly version: string;
+
   readonly createdAt: Date;
 
 }
 
+
+
 /* ==========================================================
- * ENGINE
+ * SNAPSHOT ENGINE
  * ==========================================================
  */
 
+
 export class WinningSnapshotEngine {
 
-  private constructor() {}
+
+  private static readonly VERSION =
+    "1.0.0";
+
+
 
   /**
-   * ========================================================
-   * CREATE
-   * ========================================================
+   * Create snapshot
    */
 
   static create(
     candidate: WinningCandidate
   ): WinningSnapshot {
 
+
     return {
 
       id:
-        candidate.id,
+        crypto.randomUUID(),
+
+      productId:
+        candidate.product.id,
 
       score:
         candidate.score,
@@ -80,56 +95,66 @@ export class WinningSnapshotEngine {
       confidence:
         candidate.confidence,
 
-      level:
-        candidate.level,
-
       passed:
         candidate.passed,
 
-      reasons: [
-        ...candidate.reasons,
-      ],
+      reasons:
+        [
+          ...candidate.reasons,
+        ],
 
       explanation:
-        structuredClone(
-          candidate.explanation
-        ),
+        candidate.explanation,
+
+      version:
+        this.VERSION,
+
+      createdAt:
+        new Date(),
+
+    };
+
+  }
+
+
+
+  /**
+   * Clone snapshot
+   */
+
+  static clone(
+    snapshot: WinningSnapshot
+  ): WinningSnapshot {
+
+
+    return {
+
+      ...snapshot,
+
+      reasons:
+        [
+          ...snapshot.reasons,
+        ],
 
       createdAt:
         new Date(
-          candidate.createdAt
+          snapshot.createdAt
         ),
 
     };
 
   }
 
-  /**
-   * ========================================================
-   * CREATE MANY
-   * ========================================================
-   */
-
-  static createMany(
-    candidates:
-      readonly WinningCandidate[]
-  ): readonly WinningSnapshot[] {
-
-    return candidates.map(
-      candidate =>
-        this.create(
-          candidate
-        )
-    );
-
-  }
 
 }
+
+
 
 /* ==========================================================
  * SINGLETON
  * ==========================================================
  */
+
 
 export const winningSnapshot =
   WinningSnapshotEngine;
