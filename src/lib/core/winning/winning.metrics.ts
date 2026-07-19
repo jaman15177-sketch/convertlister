@@ -6,18 +6,23 @@
  * Enterprise Winning Metrics Engine
  *
  * Responsibilities
- * - Batch analytics
- * - Score statistics
- * - Confidence statistics
- * - Level distribution
- * - Runtime metrics
+ * - Calculate runtime metrics
+ * - Aggregate winning statistics
+ * - Provide immutable metrics
+ *
+ * Rules
+ * - No scoring
+ * - No ranking
+ * - No rule execution
+ * - No repository
+ * - No persistence
+ * - No AI
  * ==========================================================
  */
 
 import type {
-  WinningCandidate,
-  WinningLevel,
-} from "./winning.types";
+  WinningScoreResult,
+} from "./winning.score";
 
 /* ==========================================================
  * METRICS
@@ -32,119 +37,57 @@ export interface WinningMetrics {
 
   readonly rejected: number;
 
-  readonly passRate: number;
-
   readonly averageScore: number;
-
-  readonly averageConfidence: number;
 
   readonly highestScore: number;
 
   readonly lowestScore: number;
 
-  readonly levelDistribution:
-    Readonly<
-      Record<
-        WinningLevel,
-        number
-      >
-    >;
-
-  readonly startedAt: Date;
-
-  readonly finishedAt: Date;
-
-  readonly durationMs: number;
+  readonly winnerRate: number;
 
 }
 
 /* ==========================================================
- * ENGINE
+ * METRICS ENGINE
  * ==========================================================
  */
 
 export class WinningMetricsEngine {
 
-  private startedAt =
-    new Date();
+  private constructor() {}
 
-  start(): void {
-
-    this.startedAt =
-      new Date();
-
-  }
-
-  finish(
-    candidates:
-      readonly WinningCandidate[]
+  static calculate(
+    results:
+      readonly WinningScoreResult[]
   ): WinningMetrics {
 
-    const finishedAt =
-      new Date();
-
     const processed =
-      candidates.length;
+      results.length;
 
     const winners =
-      candidates.filter(
-        candidate =>
-          candidate.passed
+      results.filter(
+        (result) =>
+          result.winner
       ).length;
 
     const rejected =
       processed - winners;
 
-    const totalScore =
-      candidates.reduce(
-        (
-          sum,
-          candidate
-        ) =>
-          sum +
-          candidate.score,
-        0
-      );
-
-    const totalConfidence =
-      candidates.reduce(
-        (
-          sum,
-          candidate
-        ) =>
-          sum +
-          candidate.confidence,
-        0
-      );
-
     const scores =
-      candidates.map(
-        candidate =>
-          candidate.score
+      results.map(
+        (result) =>
+          result.score
       );
 
-    const levelDistribution = {
-
-      LOW: 0,
-
-      MEDIUM: 0,
-
-      HIGH: 0,
-
-      WINNER: 0,
-
-    };
-
-    for (
-      const candidate
-      of candidates
-    ) {
-
-      levelDistribution[
-        candidate.level
-      ]++;
-
-    }
+    const totalScore =
+      scores.reduce(
+        (
+          total,
+          score
+        ) =>
+          total + score,
+        0
+      );
 
     return {
 
@@ -154,48 +97,32 @@ export class WinningMetricsEngine {
 
       rejected,
 
-      passRate:
-        processed === 0
-          ? 0
-          : winners /
-            processed,
-
       averageScore:
         processed === 0
           ? 0
           : totalScore /
             processed,
 
-      averageConfidence:
-        processed === 0
-          ? 0
-          : totalConfidence /
-            processed,
-
       highestScore:
-        scores.length === 0
+        processed === 0
           ? 0
           : Math.max(
               ...scores
             ),
 
       lowestScore:
-        scores.length === 0
+        processed === 0
           ? 0
           : Math.min(
               ...scores
             ),
 
-      levelDistribution,
-
-      startedAt:
-        this.startedAt,
-
-      finishedAt,
-
-      durationMs:
-        finishedAt.getTime() -
-        this.startedAt.getTime(),
+      winnerRate:
+        processed === 0
+          ? 0
+          : (winners /
+              processed) *
+            100,
 
     };
 
@@ -209,4 +136,4 @@ export class WinningMetricsEngine {
  */
 
 export const winningMetrics =
-  new WinningMetricsEngine();
+  WinningMetricsEngine;

@@ -23,8 +23,11 @@ import type {
 
 import type {
   WinningCandidate,
-  WinningStatistics,
 } from "./winning.types";
+
+import type {
+  WinningStatistics,
+} from "./winning.statistics";
 
 /* ==========================================================
  * ENGINE CONTRACT

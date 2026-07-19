@@ -3,21 +3,20 @@
  * WINNING EXPLANATION
  * ==========================================================
  *
- * Enterprise Winning Explanation Engine
+ * Helper Utility
  *
- * Responsibilities:
- * - Explain why product wins
- * - Convert rule reasons into readable output
- * - Provide transparent decision support
+ * Responsibilities
+ * - Build human-readable explanation
+ * - Format winning reasons
  *
- * Rules:
- * - No repository
- * - No persistence
- * - No scoring logic
- * - Explanation only
+ * Rules
+ * - No business logic
+ * - No detector
+ * - No ranking
+ * - No signal
+ * - No AI
  * ==========================================================
  */
-
 
 /* ==========================================================
  * TYPES
@@ -39,94 +38,62 @@ export interface WinningExplanation {
 
 }
 
-
-
 /* ==========================================================
- * EXPLANATION ENGINE
+ * HELPER
  * ==========================================================
  */
 
-export class WinningExplanationEngine {
+export class WinningExplanationHelper {
 
+  private constructor() {}
 
-
-  /**
-   * Create explanation
-   */
-
-  static generate(
-    reasons:
-      readonly string[]
+  static create(
+    score: number,
+    reasons: readonly string[]
   ): WinningExplanation {
 
+    let summary = "Low winning potential";
 
-    const factors =
-      [...reasons];
+    if (score >= 90) {
 
+      summary =
+        "Excellent winning potential";
 
-    return {
+    } else if (score >= 70) {
 
-      summary:
-        this.createSummary(
-          factors
-        ),
+      summary =
+        "Strong winning potential";
 
-      factors,
+    } else if (score >= 40) {
 
-      strengths:
-        factors,
-
-      weaknesses:
-        factors.length === 0
-          ? [
-              "No winning signals detected"
-            ]
-          : [],
-
-    };
-
-  }
-
-
-
-  /**
-   * Summary generator
-   */
-
-  private static createSummary(
-    factors:
-      readonly string[]
-  ): string {
-
-
-    if (
-      factors.length === 0
-    ) {
-
-      return (
-        "Product has insufficient winning signals."
-      );
+      summary =
+        "Moderate winning potential";
 
     }
 
+    return {
 
-    return (
-      `Product shows ${factors.length} `
-      +
-      "positive winning signals."
-    );
+  summary,
+
+  factors:
+    [...reasons],
+
+  strengths:
+    [...reasons],
+
+  weaknesses:
+    [],
+
+};
 
   }
 
-
 }
 
-
-
 /* ==========================================================
- * SINGLETON
+ * EXPORT
  * ==========================================================
  */
 
 export const winningExplanation =
-  WinningExplanationEngine;
+  WinningExplanationHelper;

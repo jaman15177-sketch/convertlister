@@ -3,36 +3,35 @@
  * WINNING PIPELINE
  * ==========================================================
  *
- * Enterprise Winning Detection Pipeline
+ * Enterprise Winning Pipeline
  *
  * Responsibilities:
- * - Orchestrate winning detection flow
- * - Connect detection modules
- * - Produce final pipeline output
+ * - Orchestrate winning evaluation flow
+ * - Connect winning modules
+ * - Produce final winning result
  *
  * Flow:
  *
  * Product
  *   ↓
- * Detector
+ * Rules
+ *   ↓
+ * Score
+ *   ↓
+ * Ranking
+ *   ↓
+ * Metrics
  *   ↓
  * Threshold
  *   ↓
  * Filter
  *   ↓
  * Segment
- *   ↓
- * Ranking
  *
- *
- * Rules:
- * - No repository
- * - No persistence
- * - No API
- * - No AI optimization
+ * Output:
+ * Winning Candidate
  * ==========================================================
  */
-
 
 import type {
   NormalizedProduct,
@@ -45,8 +44,8 @@ import type {
 
 
 import {
-  winningDetector,
-} from "./winning.detector";
+    WinningScoreEngine
+} from "./winning.score";
 
 
 import {
@@ -63,7 +62,9 @@ import {
   winningRanking,
 } from "./winning.ranking";
 
-
+import {
+  winningEngine,
+} from "./winning.engine";
 
 /* ==========================================================
  * PIPELINE RESULT
@@ -117,10 +118,9 @@ export class WinningPipelineEngine {
      */
 
     const detected =
-      winningDetector.detectMany(
-        products
-      );
-
+  winningEngine.executeMany(
+    products
+  );
 
 
     /**

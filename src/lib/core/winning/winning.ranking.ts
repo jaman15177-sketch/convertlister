@@ -5,38 +5,36 @@
  *
  * Enterprise Winning Ranking Engine
  *
- * Responsibilities:
- * - Rank winning candidates
- * - Sort by score/confidence
- * - Assign position
+ * Responsibilities
+ * - Rank winning results
+ * - Sort by score
+ * - Assign rank
+ * - Return immutable ranking
  *
- * Rules:
+ * Rules
+ * - No scoring
+ * - No rule execution
+ * - No metrics
  * - No repository
  * - No persistence
- * - No detector dependency
- * - Pure ranking logic
  * ==========================================================
  */
 
 import type {
-  WinningCandidate,
-} from "./winning.types";
-
-
+  WinningScoreResult,
+} from "./winning.score";
 
 /* ==========================================================
- * RANKED CANDIDATE
+ * RANKED RESULT
  * ==========================================================
  */
 
-export interface RankedWinningCandidate
-  extends WinningCandidate {
+export interface RankedWinningResult
+  extends WinningScoreResult {
 
   readonly rank: number;
 
 }
-
-
 
 /* ==========================================================
  * RANKING ENGINE
@@ -45,20 +43,21 @@ export interface RankedWinningCandidate
 
 export class WinningRankingEngine {
 
-
+  private constructor() {}
 
   /**
-   * Rank candidates
+   * Rank all results
    */
 
   static rank(
-    candidates:
-      readonly WinningCandidate[]
-  ): readonly RankedWinningCandidate[] {
-
+    results:
+      readonly WinningScoreResult[]
+  ): readonly RankedWinningResult[] {
 
     return [
-      ...candidates,
+
+      ...results,
+
     ]
       .sort(
         (
@@ -72,11 +71,11 @@ export class WinningRankingEngine {
       )
       .map(
         (
-          candidate,
+          result,
           index
         ) => ({
 
-          ...candidate,
+          ...result,
 
           rank:
             index + 1,
@@ -86,51 +85,44 @@ export class WinningRankingEngine {
 
   }
 
-
-
   /**
-   * Get top winners
+   * Top N winners
    */
 
   static top(
-    candidates:
-      readonly WinningCandidate[],
+    results:
+      readonly WinningScoreResult[],
     limit = 10
-  ): readonly RankedWinningCandidate[] {
+  ): readonly RankedWinningResult[] {
 
-
-    return this.rank(
-      candidates
-    )
-    .slice(
-      0,
-      limit
-    );
+    return this
+      .rank(
+        results
+      )
+      .slice(
+        0,
+        limit
+      );
 
   }
 
-
-
   /**
-   * Find first winner
+   * Best winner
    */
 
   static best(
-    candidates:
-      readonly WinningCandidate[]
-  ): RankedWinningCandidate | undefined {
+    results:
+      readonly WinningScoreResult[]
+  ): RankedWinningResult | undefined {
 
-
-    return this.rank(
-      candidates
-    )[0];
+    return this
+      .rank(
+        results
+      )[0];
 
   }
 
-
 }
-
-
 
 /* ==========================================================
  * SINGLETON

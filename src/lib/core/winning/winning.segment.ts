@@ -8,34 +8,25 @@
  * Responsibilities:
  * - Classify winning candidates
  * - Group products by business segment
- * - Provide segment metadata
+ * - Prepare signal-ready segmentation
  *
  * Rules:
  * - No repository
  * - No persistence
  * - No scoring logic
- * - Pure classification
  * ==========================================================
  */
-
 
 import type {
   WinningCandidate,
 } from "./winning.types";
 
 
-
-/* ==========================================================
- * SEGMENT TYPES
- * ==========================================================
- */
-
 export type WinningSegmentType =
   | "TOP_WINNER"
   | "PROMISING"
   | "EXPLORING"
   | "REJECTED";
-
 
 
 export interface WinningSegmentResult {
@@ -50,19 +41,26 @@ export interface WinningSegmentResult {
 }
 
 
+export interface WinningSegmentGroups {
 
-/* ==========================================================
- * SEGMENT ENGINE
- * ==========================================================
- */
+  readonly topWinners:
+    readonly WinningCandidate[];
+
+  readonly promising:
+    readonly WinningCandidate[];
+
+  readonly exploring:
+    readonly WinningCandidate[];
+
+  readonly rejected:
+    readonly WinningCandidate[];
+
+}
+
+
 
 export class WinningSegmentEngine {
 
-
-
-  /**
-   * Resolve candidate segment
-   */
 
   static classify(
     candidate: WinningCandidate
@@ -73,91 +71,58 @@ export class WinningSegmentEngine {
       candidate.score;
 
 
-
-    if (
-      score >= 90
-    ) {
+    if (score >= 90) {
 
       return {
-
-        segment:
-          "TOP_WINNER",
-
+        segment: "TOP_WINNER",
         score,
-
         reason:
           "High winning score detected",
-
       };
 
     }
 
 
-
-    if (
-      score >= 70
-    ) {
+    if (score >= 70) {
 
       return {
-
-        segment:
-          "PROMISING",
-
+        segment: "PROMISING",
         score,
-
         reason:
           "Strong winning signals detected",
-
       };
 
     }
 
 
-
-    if (
-      score >= 40
-    ) {
+    if (score >= 40) {
 
       return {
-
-        segment:
-          "EXPLORING",
-
+        segment: "EXPLORING",
         score,
-
         reason:
           "Needs further evaluation",
-
       };
 
     }
-
 
 
     return {
-
-      segment:
-        "REJECTED",
-
+      segment: "REJECTED",
       score,
-
       reason:
         "Insufficient winning signals",
-
     };
 
   }
 
 
 
-  /**
-   * Group candidates
-   */
-
   static group(
     candidates:
       readonly WinningCandidate[]
-  ) {
+  ): WinningSegmentGroups {
+
 
     return {
 
@@ -200,11 +165,6 @@ export class WinningSegmentEngine {
 }
 
 
-
-/* ==========================================================
- * SINGLETON
- * ==========================================================
- */
 
 export const winningSegment =
   WinningSegmentEngine;

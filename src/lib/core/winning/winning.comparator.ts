@@ -45,8 +45,7 @@ export interface WinningComparison {
   readonly scoreDifference:
     number;
 
-  readonly confidenceDifference:
-    number;
+  
 
 }
 
@@ -76,9 +75,6 @@ export class WinningComparatorEngine {
       second.score;
 
 
-    const confidenceDifference =
-      first.confidence -
-      second.confidence;
 
 
 
@@ -93,7 +89,7 @@ export class WinningComparatorEngine {
 
         scoreDifference,
 
-        confidenceDifference,
+        
 
       };
 
@@ -112,7 +108,7 @@ export class WinningComparatorEngine {
 
         scoreDifference,
 
-        confidenceDifference,
+        
 
       };
 
@@ -127,7 +123,7 @@ export class WinningComparatorEngine {
 
       scoreDifference,
 
-      confidenceDifference,
+      
 
     };
 

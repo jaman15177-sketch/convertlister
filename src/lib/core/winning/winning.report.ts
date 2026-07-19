@@ -28,7 +28,9 @@ import type {
   WinningPipelineResult,
 } from "./winning.pipeline";
 
-
+import type {
+  RankedWinningResult,
+} from "./winning.ranking";
 
 /* ==========================================================
  * REPORT TYPES
@@ -46,7 +48,7 @@ export interface WinningReport {
   readonly rejectedCandidates: number;
 
   readonly topCandidates:
-    readonly WinningCandidate[];
+  readonly RankedWinningResult[];
 
   readonly generatedAt: Date;
 

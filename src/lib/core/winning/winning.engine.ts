@@ -5,20 +5,19 @@
  *
  * Enterprise Winning Engine
  *
- * Responsibilities
+ * Responsibilities:
  * - Public winning execution boundary
- * - Coordinate detector
- * - Single and batch execution
- * - Winner filtering
+ * - Convert score result into winning candidate
+ * - Execute single and batch evaluation
  *
- * Rules
+ * Rules:
  * - No scoring logic
  * - No rule logic
- * - No repository
+ * - No ranking
+ * - No metrics
  * - No persistence
  * ==========================================================
  */
-
 
 import type {
   NormalizedProduct,
@@ -31,44 +30,78 @@ import type {
 
 
 import {
-  winningDetector,
-} from "./winning.detector";
+  WinningScoreEngine,
+} from "./winning.score";
+import {
+  winningConfidence,
+} from "./winning.confidence";
 
-
+import {
+  winningExplanation,
+} from "./winning.explanation";
 
 /* ==========================================================
  * ENGINE
  * ==========================================================
  */
 
-
 export class WinningEngine {
 
 
-
   /**
-   * ========================================================
-   * EXECUTE ONE
-   * ========================================================
+   * Execute single product
    */
 
   execute(
-    product: NormalizedProduct
-  ): WinningCandidate {
+  product: NormalizedProduct
+): WinningCandidate {
 
 
-    return winningDetector.detect(
-      product
-    );
+  const result =
+  WinningScoreEngine.calculate(
+    product
+  );
 
-  }
+const confidence =
+  winningConfidence.calculate(
+    result.score
+  );
 
+const explanation =
+  winningExplanation.create(
+    result.score,
+    result.reasons
+  );
+
+return {
+
+  id: product.id,
+
+  product,
+
+  score: result.score,
+
+  confidence: confidence.confidence,
+
+  winner: result.winner,
+
+  passed: result.winner,
+
+  reasons: result.reasons,
+
+  explanation,
+
+  createdAt: new Date(),
+
+};
+
+}
+    
+      
 
 
   /**
-   * ========================================================
-   * EXECUTE MANY
-   * ========================================================
+   * Execute multiple products
    */
 
   executeMany(
@@ -77,8 +110,11 @@ export class WinningEngine {
   ): readonly WinningCandidate[] {
 
 
-    return winningDetector.detectMany(
-      products
+    return products.map(
+      (product) =>
+        this.execute(
+          product
+        )
     );
 
   }
@@ -86,9 +122,7 @@ export class WinningEngine {
 
 
   /**
-   * ========================================================
-   * WINNERS ONLY
-   * ========================================================
+   * Only winners
    */
 
   executeWinners(
@@ -101,15 +135,14 @@ export class WinningEngine {
       products
     )
     .filter(
-      candidate =>
-        candidate.passed
+      (candidate) =>
+        candidate.winner
     );
 
   }
 
 
 }
-
 
 
 /* ==========================================================

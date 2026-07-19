@@ -35,20 +35,15 @@ export class WinningMapper {
   ): WinningCandidate {
 
     return {
+  id: product.id,
+  product,
+  score: 0,
+confidence: 0,
 
-      id: product.id,
+passed: false,
+  winner: false,
+  reasons: [],
 
-      product,
-
-      score: 0,
-
-      confidence: 0,
-
-      level: "LOW",
-
-      passed: false,
-
-      reasons: [],
 
       explanation: {
 

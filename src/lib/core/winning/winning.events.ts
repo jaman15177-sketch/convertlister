@@ -63,7 +63,7 @@ export interface WinningEvent {
   readonly score: number;
 
 
-  readonly confidence: number;
+ 
 
 
   readonly createdAt: Date;
@@ -114,8 +114,7 @@ export class WinningEventFactory {
         candidate.score,
 
 
-      confidence:
-        candidate.confidence,
+      
 
 
       createdAt:

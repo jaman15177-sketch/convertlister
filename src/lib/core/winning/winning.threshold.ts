@@ -34,7 +34,7 @@ export type WinningThresholdLevel =
 
 export interface WinningThresholdResult {
 
-  readonly passed: boolean;
+  readonly qualified: boolean;
 
   readonly level:
     WinningThresholdLevel;
@@ -93,13 +93,9 @@ export class WinningThresholdEngine {
     ) {
 
       return {
-
-        passed: true,
-
-        level:
-          "WINNER",
-
-      };
+  qualified: true,
+  level: "WINNER",
+};
 
     }
 
@@ -111,13 +107,9 @@ export class WinningThresholdEngine {
     ) {
 
       return {
-
-        passed: true,
-
-        level:
-          "HIGH_POTENTIAL",
-
-      };
+  qualified: true,
+  level: "HIGH_POTENTIAL",
+};
 
     }
 
@@ -129,26 +121,18 @@ export class WinningThresholdEngine {
     ) {
 
       return {
-
-        passed: false,
-
-        level:
-          "CANDIDATE",
-
-      };
+  qualified: false,
+  level: "CANDIDATE",
+};
 
     }
 
 
 
     return {
-
-      passed: false,
-
-      level:
-        "REJECT",
-
-    };
+  qualified: false,
+  level: "REJECT",
+};
 
   }
 

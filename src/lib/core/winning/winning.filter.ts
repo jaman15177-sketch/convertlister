@@ -6,15 +6,15 @@
  * Enterprise Winning Candidate Filter
  *
  * Responsibilities:
- * - Remove invalid candidates
- * - Apply detection quality filters
- * - Keep only usable winners
+ * - Remove low-quality candidates
+ * - Apply minimum score validation
+ * - Keep only winning-ready candidates
  *
  * Rules:
- * - No repository
- * - No persistence
  * - No scoring
+ * - No ranking
  * - No AI optimization
+ * - No repository
  * - Pure filtering logic
  * ==========================================================
  */
@@ -22,8 +22,6 @@
 import type {
   WinningCandidate,
 } from "./winning.types";
-
-
 
 /* ==========================================================
  * FILTER RESULT
@@ -40,16 +38,12 @@ export interface WinningFilterResult {
 
 }
 
-
-
 /* ==========================================================
  * FILTER ENGINE
  * ==========================================================
  */
 
 export class WinningFilterEngine {
-
-
 
   /**
    * Filter candidates
@@ -60,43 +54,27 @@ export class WinningFilterEngine {
       readonly WinningCandidate[]
   ): WinningFilterResult {
 
-
     const accepted:
       WinningCandidate[] = [];
-
 
     const rejected:
       WinningCandidate[] = [];
 
-
-
-    for (
-      const candidate
-      of candidates
-    ) {
-
+    for (const candidate of candidates) {
 
       if (
-        this.isValid(
-          candidate
-        )
+        this.isValid(candidate)
       ) {
 
-        accepted.push(
-          candidate
-        );
+        accepted.push(candidate);
 
       } else {
 
-        rejected.push(
-          candidate
-        );
+        rejected.push(candidate);
 
       }
 
     }
-
-
 
     return {
 
@@ -108,52 +86,30 @@ export class WinningFilterEngine {
 
   }
 
-
-
   /**
-   * Candidate validation rules
+   * Validation
    */
 
   private static isValid(
     candidate: WinningCandidate
   ): boolean {
 
-
-    if (
-      !candidate.id
-    ) {
-
+    if (!candidate.product) {
       return false;
-
     }
-
 
     if (
       candidate.score < 40
     ) {
-
       return false;
-
     }
-
-
-    if (
-      candidate.product === undefined
-    ) {
-
-      return false;
-
-    }
-
 
     return true;
 
   }
 
-
-
   /**
-   * Only winners
+   * Winners only
    */
 
   static winnersOnly(
@@ -161,22 +117,16 @@ export class WinningFilterEngine {
       readonly WinningCandidate[]
   ): readonly WinningCandidate[] {
 
-
     return this.filter(
       candidates
-    )
-    .accepted
-    .filter(
-      candidate =>
-        candidate.passed
+    ).accepted.filter(
+      (candidate) =>
+        candidate.winner
     );
 
   }
 
-
 }
-
-
 
 /* ==========================================================
  * SINGLETON

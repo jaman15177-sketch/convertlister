@@ -52,7 +52,7 @@ export interface WinningAuditRecord {
 
   readonly score: number;
 
-  readonly confidence: number;
+  
 
   readonly timestamp: Date;
 
@@ -101,8 +101,7 @@ export class WinningAuditEngine {
         candidate.score,
 
 
-      confidence:
-        candidate.confidence,
+      
 
 
       timestamp:

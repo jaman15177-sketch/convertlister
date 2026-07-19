@@ -6,11 +6,18 @@
  * Enterprise Winning Score Engine
  *
  * Responsibilities
- * - Execute rule library
+ * - Execute winning rules
  * - Aggregate score
- * - Calculate confidence
- * - Generate explanation
+ * - Normalize score
+ * - Decide winner
  * - Return immutable result
+ *
+ * Rules
+ * - No ranking
+ * - No metrics
+ * - No repository
+ * - No persistence
+ * - No AI
  * ==========================================================
  */
 
@@ -18,28 +25,12 @@ import type {
   NormalizedProduct,
 } from "@/core/normalization/normalizer.types";
 
-import type {
-  WinningExplanation,
-} from "./winning.explanation";
-
 import {
-  WinningRules,
+  winningRules,
 } from "./winning.rules";
 
-import {
-  WinningConfidenceEngine,
-} from "./winning.confidence";
-
-import {
-  WinningExplanationEngine,
-} from "./winning.explanation";
-
-import {
-  DEFAULT_WINNING_THRESHOLD,
-} from "./winning.constants";
-
 /* ==========================================================
- * SCORE RESULT
+ * RESULT
  * ==========================================================
  */
 
@@ -47,20 +38,15 @@ export interface WinningScoreResult {
 
   readonly score: number;
 
-  readonly confidence: number;
-
-  readonly passed: boolean;
+  readonly winner: boolean;
 
   readonly reasons:
     readonly string[];
 
-  readonly explanation:
-    WinningExplanation;
-
 }
 
 /* ==========================================================
- * SCORE ENGINE
+ * ENGINE
  * ==========================================================
  */
 
@@ -72,28 +58,38 @@ export class WinningScoreEngine {
     product: NormalizedProduct
   ): WinningScoreResult {
 
-    const results =
-      WinningRules.evaluate(
-        product
-      );
-
     let score = 0;
 
-    const reasons: string[] = [];
+    const reasons:
+      string[] = [];
 
     for (
-      const result of results
+      const rule
+      of winningRules
     ) {
+
+      if (
+        !rule.enabled
+      ) {
+
+        continue;
+
+      }
+
+      const result =
+        rule.evaluate(
+          product
+        );
+
+      score +=
+        result.score;
 
       if (
         result.passed
       ) {
 
-        score +=
-          result.weight;
-
         reasons.push(
-          result.name
+          result.reason
         );
 
       }
@@ -109,32 +105,14 @@ export class WinningScoreEngine {
         )
       );
 
-    const confidence =
-      WinningConfidenceEngine
-        .calculate(
-          score
-        );
-
-    const explanation =
-      WinningExplanationEngine
-        .generate(
-          reasons
-        );
-
     return {
 
       score,
 
-      confidence:
-        confidence.confidence,
-
-      passed:
-        score >=
-        DEFAULT_WINNING_THRESHOLD,
+      winner:
+        score >= 80,
 
       reasons,
-
-      explanation,
 
     };
 
