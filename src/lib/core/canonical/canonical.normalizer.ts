@@ -46,7 +46,9 @@ import type {
 import {
   NormalizationEngine,
 } from "@/core/catalog-health/base/normalization.engine";
-
+import type {
+  NormalizedProduct,
+} from "@/core/normalization";
 
 /**
  * ============================================================
@@ -73,45 +75,35 @@ export class CanonicalNormalizer {
    * Normalize marketplace product
    */
   public normalize(
-    product: AdapterProduct
-  ): CanonicalNormalizedProduct {
+    product: NormalizedProduct
+): CanonicalNormalizedProduct{
+  return {
+    title: this.normalizationEngine.normalizeText(
+      product.title
+    ),
 
+    brand: this.normalizationEngine.normalizeBrand(
+      product.attributes.brand
+    ),
 
-    return {
+    sku: this.normalizationEngine.normalizeSKU(
+      product.sku
+    ),
 
-      title:
-        this.normalizationEngine.normalizeText(
-          product.title
-        ),
+    barcode: this.normalizationEngine.normalizeBarcode(
+      product.barcode
+    ),
 
-
-      brand:
-        this.normalizationEngine.normalizeBrand(
-          product.brand
-        ),
-
-
-      sku:
-        this.normalizationEngine.normalizeSKU(
-          product.sku
-        ),
-
-
-      barcode:
-        this.normalizationEngine.normalizeBarcode(
-          product.barcode
-        ),
-
-
-      attributes:
-        this.normalizationEngine.normalizeAttributes(
-          product.attributes
-        ),
-
-    };
-
-  }
-
+    attributes: this.normalizationEngine.normalizeAttributes(
+  Object.fromEntries(
+    Object.entries(product.attributes ?? {}).map(([key, value]) => [
+      key,
+      String(value),
+    ])
+  )
+),
+  };
+}
 
   /**
    * Normalize single value

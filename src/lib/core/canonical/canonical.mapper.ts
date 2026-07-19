@@ -32,10 +32,6 @@
  * ============================================================
  */
 
-import type {
-  AdapterProduct,
-  ProductVariant,
-} from "@/adapters/core/adapter.contract";
 
 import type {
   CanonicalProduct,
@@ -49,7 +45,10 @@ import {
   CANONICAL_VERSION,
 } from "./canonical.constants";
 
-
+import type {
+  NormalizedProduct,
+  NormalizedVariant,
+} from "@/core/normalization";
 /**
  * ============================================================
  * CANONICAL MAPPER
@@ -62,11 +61,9 @@ export class CanonicalMapper {
   /**
    * Map AdapterProduct to CanonicalProduct
    */
-  public map(
-    product: AdapterProduct
-  ): CanonicalProduct {
-
-
+ public map(
+  product: NormalizedProduct
+): CanonicalProduct {
     const now =
       new Date();
 
@@ -122,73 +119,54 @@ export class CanonicalMapper {
     };
 
   }
+/**
+ * Map single variant
+ */
+private mapVariant(
+  variant: NormalizedVariant
+): CanonicalVariant {
+
+  return {
+    id: variant.id,
+    sku: variant.sku,
+    barcode: variant.barcode,
+    title: variant.title,
+    attributes: Object.fromEntries(
+      Object.entries(variant.attributes ?? {}).map(
+        ([key, value]) => [key, String(value)]
+      )
+    ),
+  };
+
+}
+
+  
+     
 
 
-  /**
-   * Map marketplace variant
-   */
-  public mapVariant(
-    variant: ProductVariant
-  ): CanonicalVariant {
-
-
-    return {
-
-      id:
-        variant.id,
-
-
-      sku:
-        variant.sku,
-
-
-      barcode:
-        variant.barcode,
-
-
-      title:
-        variant.title,
-
-
-      attributes:
-        variant.attributes ?? {},
-
-    };
-
-  }
-
-
-  /**
+    /**
    * Map all variants
    */
   public mapVariants(
-    variants?: ReadonlyArray<ProductVariant>
+    variants?: ReadonlyArray<NormalizedVariant>
   ): CanonicalVariant[] {
 
-
     if (!variants) {
-
       return [];
-
     }
 
-
     return variants.map(
-      (variant) =>
-        this.mapVariant(variant)
+      (variant) => this.mapVariant(variant)
     );
 
   }
-
 
   /**
    * Create source identity
    */
   private mapSource(
-    product: AdapterProduct
-  ): CanonicalSource {
-
-
+  product: NormalizedProduct
+): CanonicalSource {
     return {
 
       marketplace:

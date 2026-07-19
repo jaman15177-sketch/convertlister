@@ -1,4 +1,4 @@
-import type { AdapterProduct } from "@/adapters/core/adapter.contract";
+import type { NormalizedProduct } from "@/core/normalization/normalizer.types";
 
 import type {
   ImportJob,
@@ -16,7 +16,7 @@ import type { ImportService } from "./import.contract";
 import { importEngine } from "./import.engine";
 import type {
   RawProduct,
-} from "@/core/normalization/product-normalizer";
+} from "@/core/normalization/normalizer.types";
 import {
   productPersistenceService,
 } from "../persistence";
@@ -46,7 +46,7 @@ private readonly persistence =
   product: RawProduct,
   source: ImportSource,
   organizationId: string
-): Promise<AdapterProduct> {
+): Promise<NormalizedProduct> {
     return importEngine.executeSingle(
   product as never,
   source,

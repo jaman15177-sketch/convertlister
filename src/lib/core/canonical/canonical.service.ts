@@ -39,9 +39,8 @@ import type {
   CanonicalKey,
 } from "./canonical.key";
 import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
-
+  NormalizedProduct,
+} from "@/core/normalization";
 
 import {
   CanonicalValidator,
@@ -108,23 +107,19 @@ export class CanonicalService {
 
   constructor() {
 
-    this.validator =
-      new CanonicalValidator();
+  this.validator =
+    new CanonicalValidator();
 
+  this.normalizer =
+    new CanonicalNormalizer();
 
-    this.normalizer =
-      new CanonicalNormalizer();
+  this.builder =
+    new CanonicalBuilder();
 
+  this.keyGenerator =
+    new CanonicalKeyGenerator();
 
-    this.builder =
-      new CanonicalBuilder();
-
-
-    this.keyGenerator =
-      new CanonicalKeyGenerator();
-
-  }
-
+}
 
 
   /**
@@ -134,18 +129,14 @@ export class CanonicalService {
    */
 
   public create(
-    product: AdapterProduct
-  ): CanonicalServiceResult {
+  product: NormalizedProduct
+): CanonicalServiceResult {
 
-
-    /**
-     * Step 1
-     * Validate input
-     */
-    this.validator.assertValid(
-      product
-    );
-
+  /**
+   * Step 1
+   * Validate input
+   */
+    
 
 
     /**
@@ -153,10 +144,7 @@ export class CanonicalService {
      * Normalize fields
      */
     const normalized =
-      this.normalizer.normalize(
-        product
-      );
-
+  this.normalizer.normalize(product);
 
 
     /**
@@ -174,18 +162,13 @@ export class CanonicalService {
      * Step 4
      * Build canonical entity
      */
-    const canonicalProduct =
-      this.builder.build({
-
-        product,
-
-        normalized,
-
-        fingerprint:
-          key.value,
-
-      });
-
+    
+        const canonicalProduct =
+  this.builder.build({
+    product,
+    normalized,
+    fingerprint: key.value,
+  });
 
 
     return {

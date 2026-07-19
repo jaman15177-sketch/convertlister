@@ -31,23 +31,21 @@
  * ============================================================
  */
 
-import type {
-  CanonicalProduct,
-  DuplicateResult,
-} from "./canonical.types";
-
-
-import {
-  DuplicateReason,
-} from "./canonical.types";
-
-
 import {
   IdentityEngine,
 } from "./identity.engine";
 
+import {
+  IdentityMatchLevel,
+  DuplicateReason,
+} from "./canonical.types";
 
-/**
+import type {
+  CanonicalProduct,
+  IdentityMatchResult,
+  DuplicateResult,
+} from "./canonical.types";
+ /**
  * ============================================================
  * DUPLICATE DETECTOR
  * ============================================================
@@ -199,7 +197,10 @@ export class DuplicateDetector {
       );
 
 
-    if (identity.matched) {
+    if (
+  identity.level === IdentityMatchLevel.EXACT ||
+  identity.level === IdentityMatchLevel.STRONG
+) {
 
       return {
 

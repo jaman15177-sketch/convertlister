@@ -20,14 +20,13 @@
 
 import type {
   UniversalEntity,
-  UniversalQuery,
   UniversalStoreResult,
 } from "../store/universal.types";
 
 
 import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
+  NormalizedProduct,
+} from "@/core/normalization/normalizer.types";
 
 
 import type {
@@ -50,80 +49,116 @@ export interface SupabaseProductRepositoryContract {
    * Create product
    */
   create(
-  input: SupabaseProductCreateInput
-): Promise<
-  UniversalStoreResult<
-    UniversalEntity<AdapterProduct>
-  >
->;
-
-findById(
-  id: string,
-  organizationId: string
-): Promise<
-  UniversalStoreResult<
-    UniversalEntity<AdapterProduct>
-  >
->;
+    input: SupabaseProductCreateInput
+  ): Promise<
+    UniversalStoreResult<
+      UniversalEntity<NormalizedProduct>
+    >
+  >;
 
 
-  
-find(
-  query?: SupabaseProductQuery
-): Promise<
-  UniversalStoreResult<
-    readonly UniversalEntity<AdapterProduct>[]
-  >
->;
 
-update(
-  id: string,
-  organizationId: string,
-  input: SupabaseProductUpdateInput
-): Promise<
-  UniversalStoreResult<
-    UniversalEntity<AdapterProduct>
-  >
->;
-upsert(
-  input: SupabaseProductCreateInput
-): Promise<
-  UniversalStoreResult<
-    UniversalEntity<AdapterProduct>
-  >
->;
-
-delete(
-  id: string,
-  organizationId: string
-): Promise<
-  UniversalStoreResult<boolean>
->;
-
-exists(
-  id: string,
-  organizationId: string
-): Promise<boolean>;
-
-  
+  /**
+   * Find by id
+   */
+  findById(
+    id: string,
+    organizationId: string
+  ): Promise<
+    UniversalStoreResult<
+      UniversalEntity<NormalizedProduct>
+    >
+  >;
 
 
+
+  /**
+   * Find products
+   */
+  find(
+    query?: SupabaseProductQuery
+  ): Promise<
+    UniversalStoreResult<
+      readonly UniversalEntity<NormalizedProduct>[]
+    >
+  >;
+
+
+
+  /**
+   * Update product
+   */
+  update(
+    id: string,
+    organizationId: string,
+    input: SupabaseProductUpdateInput
+  ): Promise<
+    UniversalStoreResult<
+      UniversalEntity<NormalizedProduct>
+    >
+  >;
+
+
+
+  /**
+   * Upsert product
+   */
+  upsert(
+    input: SupabaseProductCreateInput
+  ): Promise<
+    UniversalStoreResult<
+      UniversalEntity<NormalizedProduct>
+    >
+  >;
+
+
+
+  /**
+   * Delete product
+   */
+  delete(
+    id: string,
+    organizationId: string
+  ): Promise<
+    UniversalStoreResult<boolean>
+  >;
+
+
+
+  /**
+   * Exists
+   */
+  exists(
+    id: string,
+    organizationId: string
+  ): Promise<boolean>;
+
+
+
+  /**
+   * Find by SKU
+   */
   findBySku(
-  sku: string,
-  organizationId: string
-): Promise<
-  UniversalStoreResult<
-    UniversalEntity<AdapterProduct>
-  >
->;
+    sku: string,
+    organizationId: string
+  ): Promise<
+    UniversalStoreResult<
+      UniversalEntity<NormalizedProduct>
+    >
+  >;
 
-findByExternalId(
-  externalId: string,
-  organizationId: string
-): Promise<
-  UniversalStoreResult<
-    UniversalEntity<AdapterProduct>
-  >
->;
+
+
+  /**
+   * Find by external id
+   */
+  findByExternalId(
+    externalId: string,
+    organizationId: string
+  ): Promise<
+    UniversalStoreResult<
+      UniversalEntity<NormalizedProduct>
+    >
+  >;
 
 }

@@ -6,8 +6,10 @@
  * ============================================================
  */
 
-import type { AdapterProduct } from "@/adapters/core/adapter.contract";
-import type { RawProduct } from "@/core/normalization/product-normalizer";
+import type { NormalizedProduct } from "@/core/normalization/normalizer.types";
+import type {
+  RawProduct,
+} from "@/core/normalization/normalizer.types";
 
 import type {
   ImportAdapterRequest,
@@ -48,8 +50,7 @@ export interface ImportService {
     product: RawProduct,
     source: ImportSource,
     organizationId: string
-  ): Promise<AdapterProduct>;
-
+  ): Promise<NormalizedProduct>
   createJob(
     request: ImportRequest
   ): Promise<ImportJob>;

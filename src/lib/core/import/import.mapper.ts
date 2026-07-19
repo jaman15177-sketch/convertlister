@@ -18,9 +18,8 @@
  */
 
 import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
-
+  NormalizedProduct,
+} from "@/core/normalization";
 import type {
   UniversalEntity,
 } from "../store/universal.types";
@@ -46,10 +45,8 @@ export class ImportMapper {
    * UniversalEntity
    */
   static toEntity(
-    product: AdapterProduct
-  ): UniversalEntity<AdapterProduct> {
-
-    const now = new Date();
+  product: NormalizedProduct
+): UniversalEntity<NormalizedProduct> {    const now = new Date();
 
     return {
 
@@ -57,7 +54,7 @@ export class ImportMapper {
 
       data: product,
 
-      metadata: {
+            metadata: {
 
         createdAt: now,
 
@@ -69,7 +66,7 @@ export class ImportMapper {
 
     };
 
-  }
+  }  
 /* ==========================================================
  * TO PERSISTENCE REQUEST
  * ==========================================================
@@ -94,3 +91,4 @@ static toPersistenceRequest(
 
 }
 }
+

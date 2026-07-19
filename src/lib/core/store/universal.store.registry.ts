@@ -19,8 +19,8 @@
 
 import { UniversalStore } from "./universal.store";
 import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
+  NormalizedProduct,
+} from "@/core/normalization/normalizer.types";
 /* ==========================================================
  * STORE REGISTRY
  * ==========================================================
@@ -114,4 +114,4 @@ export class UniversalStoreRegistry<T = unknown> {
  */
 
 export const universalStoreRegistry =
-  new UniversalStoreRegistry<AdapterProduct>();
+  new UniversalStoreRegistry<NormalizedProduct>();

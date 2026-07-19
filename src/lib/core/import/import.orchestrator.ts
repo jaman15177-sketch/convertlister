@@ -17,7 +17,9 @@
  * ✗ Contain business rules
  * ============================================================
  */
-
+import {
+  importValidator,
+} from "./import.validator";
 import { AdapterRegistry } from "@/core/registry/adapter.registry";
 
 import type {
@@ -37,7 +39,9 @@ export class ImportOrchestrator {
   public async fetch(
     request: ImportAdapterRequest
   ): Promise<ImportAdapterResponse> {
-
+ importValidator.validateAdapterRequest(
+    request
+  );
     const result =
       await AdapterRegistry.execute(
         request.source,

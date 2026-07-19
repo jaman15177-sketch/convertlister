@@ -3,24 +3,16 @@
  * SUPABASE PRODUCT MAPPER
  * ==========================================================
  *
- * Production Data Transformation Layer
- *
- * Responsibilities:
- * - Supabase row → Domain entity
- * - Domain entity → Supabase payload
+ * Database Row
+ *        ↓
+ * NormalizedProduct Entity
  *
  * Rules:
- * - No database calls
+ * - Pure mapping only
+ * - No business logic
  * - No validation
- * - No business rules
- * - Pure transformation only
  * ==========================================================
  */
-
-
-import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
 
 
 import type {
@@ -29,106 +21,105 @@ import type {
 
 
 import type {
+  NormalizedProduct,
+} from "@/core/normalization/normalizer.types";
+
+
+import type {
   SupabaseProductCreateInput,
   SupabaseProductUpdateInput,
   SupabaseProductRow,
 } from "./supabase.product.types";
 
-/**
- * ==========================================================
- * SUPABASE PRODUCT MAPPER
- * ==========================================================
- */
+
 
 export class SupabaseProductMapper {
 
 
-  /**
-   * Supabase Row
-   *
-   * ↓
-   *
-   * Universal Entity
-   */
+
   static toEntity(
     row: SupabaseProductRow
   ):
-    UniversalEntity<AdapterProduct>
+  UniversalEntity<NormalizedProduct>
   {
 
     return {
 
-  id: row.id,
-
-  metadata: {
-
-    createdAt:
-      new Date(
-        row.created_at
-      ),
-
-    updatedAt:
-      new Date(
-        row.updated_at
-      ),
-
-    version:
-      row.current_version,
-
-  },
+      id: row.id,
 
 
-  data: {
+      metadata: {
+
+        createdAt:
+          new Date(row.created_at),
+
+        updatedAt:
+          new Date(row.updated_at),
+
+        version:
+          row.current_version,
+
+      },
+
+
+      data: {
 
         id: row.id,
+
 
         title:
           row.title,
 
 
-        price:
-          row.price,
+        description:
+          row.description ?? "",
 
 
-        currency:
-          row.currency,
 
+        price: {
 
-        source:
-          row.source,
+          amount:
+            row.price,
 
-
-        images:
-          Array.isArray(
-            row.metadata?.images
-          )
-            ? row.metadata.images as string[]
-            : [],
-
-
-        metadata: {
-
-          ...(row.metadata ?? {}),
-
-          status:
-            row.status,
-
-          catalogHealthScore:
-            row.catalog_health_score,
-
-          catalogHealthGrade:
-            row.catalog_health_grade,
-
-          winningScore:
-            row.winning_score,
-
-          isReady:
-            row.is_ready,
-
-          version:
-            row.current_version,
+          currency:
+            row.currency,
 
         },
+
+source:
+  row.source,
+
+marketplace:
+  (
+    row.metadata as Record<string, unknown>
+  )?.marketplace as string ?? "unknown",
+
+attributes:
+  (
+    row.metadata as Record<string, unknown>
+  )?.attributes as Record<string, unknown> ?? {},
+        images: {
+
+          urls:
+            Array.isArray(row.metadata?.images)
+              ? row.metadata.images as string[]
+              : [],
+
+        },
+
+
+        keywords:
+          [],
+
+
+
+        metadata:
+          row.metadata ?? {},
+
+
+
+        status: "NORMALIZED"
+
 
       },
 
@@ -138,16 +129,8 @@ export class SupabaseProductMapper {
 
 
 
-  /**
-   * Create Input
-   *
-   * ↓
-   *
-   * Supabase Insert Payload
-   */
   static toDatabase(
-    input:
-      SupabaseProductCreateInput
+    input: SupabaseProductCreateInput
   )
   {
 
@@ -198,12 +181,9 @@ export class SupabaseProductMapper {
 
 
 
-  /**
-   * Partial update mapper
-   */
   static toUpdate(
-  input: SupabaseProductUpdateInput
-)
+    input: SupabaseProductUpdateInput
+  )
   {
 
     return {
@@ -211,8 +191,7 @@ export class SupabaseProductMapper {
       ...input,
 
       updated_at:
-        new Date()
-          .toISOString(),
+        new Date().toISOString(),
 
     };
 

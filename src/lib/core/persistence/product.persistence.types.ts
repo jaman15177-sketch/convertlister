@@ -17,10 +17,9 @@
  * - Shared across persistence subsystem
  * ==========================================================
  */
-
 import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
+  NormalizedProduct,
+} from "@/core/normalization/normalizer.types";
 
 import type {
   UniversalEntity,
@@ -46,7 +45,7 @@ export interface ProductPersistenceRequest {
   readonly organizationId: string;
 
   readonly entity:
-    UniversalEntity<AdapterProduct>;
+    UniversalEntity<NormalizedProduct>;
 
   readonly mode:
     PersistenceMode;
@@ -63,7 +62,7 @@ export interface ProductBatchPersistenceRequest {
   readonly organizationId: string;
 
   readonly entities:
-    readonly UniversalEntity<AdapterProduct>[];
+    readonly UniversalEntity<NormalizedProduct>[];
 
   readonly mode:
     PersistenceMode;

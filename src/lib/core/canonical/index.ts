@@ -28,7 +28,43 @@
  * ============================================================
  */
 
+/**
+ * ============================================================
+ * CONVERTLISTER
+ * Canonical Identity System
+ * Public API
+ * ============================================================
+ */
 
+/* ============================================================
+ * FOUNDATION
+ * ============================================================
+ */
+
+export * from "./canonical.types";
+export * from "./canonical.constants";
+export * from "./canonical.config";
+export * from "./canonical.errors";
+
+/* ============================================================
+ * CORE
+ * ============================================================
+ */
+
+export * from "./canonical.normalizer";
+export * from "./canonical.validator";
+export * from "./canonical.key";
+export * from "./canonical.mapper";
+
+
+/* ============================================================
+ * ORCHESTRATION
+ * ============================================================
+ */
+
+export * from "./canonical.audit";
+export * from "./canonical.service";
+export * from "./canonical.engine";
 /* ============================================================
  * TYPES
  * ============================================================
@@ -229,3 +265,7 @@ export {
   CanonicalEngine,
 
 } from "./canonical.engine";
+export * from "./identity.engine";
+export * from "./duplicate.detector";
+export * from "./merge.engine";
+export * from "./canonical.builder";

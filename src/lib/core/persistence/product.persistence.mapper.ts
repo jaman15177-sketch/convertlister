@@ -3,19 +3,16 @@
  * PRODUCT PERSISTENCE MAPPER
  * ==========================================================
  *
- * Enterprise Product Persistence Mapper
+ * NormalizedProduct -> Repository Mapper
  *
- * Responsibilities
- * - Convert UniversalEntity -> Repository Input
- * - Pure mapping only
- * * No database logic
- * * No business logic
+ * Pure mapping only.
+ * No business logic.
  * ==========================================================
  */
 
 import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
+  NormalizedProduct,
+} from "@/core/normalization/normalizer.types";
 
 import type {
   UniversalEntity,
@@ -42,7 +39,7 @@ export class ProductPersistenceMapper {
 
   static toCreateInput(
     organizationId: string,
-    entity: UniversalEntity<AdapterProduct>,
+    entity: UniversalEntity<NormalizedProduct>,
   ): SupabaseProductCreateInput {
 
     this.ensureEntity(entity);
@@ -58,10 +55,10 @@ export class ProductPersistenceMapper {
         entity.data.description ?? null,
 
       price:
-        entity.data.price,
+        entity.data.price.amount,
 
       currency:
-        entity.data.currency,
+        entity.data.price.currency,
 
       source:
         entity.data.source,
@@ -71,41 +68,11 @@ export class ProductPersistenceMapper {
 
       metadata: {
 
-        sku:
-          entity.data.sku,
-
-        brand:
-          entity.data.brand,
-
-        category:
-          entity.data.category,
-
-        marketplace:
-          entity.data.marketplace,
-
-        barcode:
-          entity.data.barcode,
-
-        inventory:
-          entity.data.inventory,
-
-        bullets:
-          entity.data.bullets,
+        keywords:
+          entity.data.keywords,
 
         images:
-          entity.data.images,
-
-        attributes:
-          entity.data.attributes,
-
-        seo:
-          entity.data.seo,
-
-        variants:
-          entity.data.variants,
-
-        adapterMetadata:
-          entity.data.metadata,
+          entity.data.images.urls,
 
         createdAt:
           entity.metadata.createdAt.toISOString(),
@@ -120,76 +87,75 @@ export class ProductPersistenceMapper {
 
     };
 
-  }/* ========================================================
- * TO UPDATE INPUT
- * ========================================================
- */
+  }  /**
+   * ========================================================
+   * UPDATE INPUT
+   * ========================================================
+   */
 
-static toUpdateInput(
-  entity: UniversalEntity<AdapterProduct>
-): SupabaseProductUpdateInput {
+  static toUpdateInput(
+    entity: UniversalEntity<NormalizedProduct>,
+  ): SupabaseProductUpdateInput {
 
-  this.ensureEntity(entity);
+    this.ensureEntity(entity);
 
-  return {
+    return {
 
-    title:
-      entity.data.title,
+      title:
+        entity.data.title,
 
-    description:
-      entity.data.description ?? null,
+      description:
+        entity.data.description ?? null,
 
-    price:
-      entity.data.price,
+      price:
+        entity.data.price.amount,
 
-    currency:
-      entity.data.currency,
+      currency:
+        entity.data.price.currency,
 
-    status:
-      "raw",
-
-    metadata: {
+      status:
+        "raw",
 
       metadata: {
 
-  ...(entity.data.metadata ?? {}),
+        keywords:
+          entity.data.keywords,
 
-  createdAt:
-    entity.metadata.createdAt.toISOString(),
+        images:
+          entity.data.images.urls,
 
-  updatedAt:
-    entity.metadata.updatedAt.toISOString(),
+        createdAt:
+          entity.metadata.createdAt.toISOString(),
 
-  version:
-    entity.metadata.version,
+        updatedAt:
+          entity.metadata.updatedAt.toISOString(),
 
-},
+        version:
+          entity.metadata.version,
 
-    },
+      },
 
-  };
+    };
 
-}
+  }
 
-  /* ========================================================
- * TO UPSERT INPUT
- * ========================================================
- */
+  /**
+   * ========================================================
+   * UPSERT INPUT
+   * ========================================================
+   */
 
-static toUpsertInput(
-  organizationId: string,
-  entity: UniversalEntity<AdapterProduct>
-): SupabaseProductCreateInput {
+  static toUpsertInput(
+    organizationId: string,
+    entity: UniversalEntity<NormalizedProduct>,
+  ): SupabaseProductCreateInput {
 
-  return this.toCreateInput(
+    return this.toCreateInput(
+      organizationId,
+      entity,
+    );
 
-    organizationId,
-
-    entity
-
-  );
-
-}
+  }
 
   /**
    * ========================================================
@@ -199,33 +165,25 @@ static toUpsertInput(
 
   static toBatchInput(
     organizationId: string,
-    entities: readonly UniversalEntity<AdapterProduct>[],
+    entities: readonly UniversalEntity<NormalizedProduct>[],
   ): readonly SupabaseProductCreateInput[] {
 
     return entities.map(
+      entity =>
+        this.toCreateInput(
+          organizationId,
+          entity,
+        ),
+    );
 
-  entity =>
-
-    this.toCreateInput(
-
-      organizationId,
-
-      entity
-
-    )
-
-);
-
-  }
-
-  /**
+  }  /**
    * ========================================================
    * VALIDATION
    * ========================================================
    */
 
   private static ensureEntity(
-    entity: UniversalEntity<AdapterProduct>,
+    entity: UniversalEntity<NormalizedProduct>,
   ): void {
 
     if (!entity) {
@@ -247,7 +205,7 @@ static toUpsertInput(
     if (!entity.data) {
 
       throw new ProductPersistenceMapperError(
-        "Adapter product is required.",
+        "Normalized product is required.",
       );
 
     }

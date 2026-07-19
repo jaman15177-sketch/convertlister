@@ -3,25 +3,29 @@
  * PRODUCT REPOSITORY (MEMORY)
  * ==========================================================
  *
- * Default in-memory implementation.
+ * In-memory repository implementation.
  *
- * Responsibilities
- * - Repository implementation
- * - Delegate persistence to UniversalStore
+ * Responsibilities:
+ * - Repository abstraction
+ * - UniversalStore delegation
  *
- * Replace later with:
- * - SupabaseProductRepository
- * - PostgresProductRepository
+ * Rules:
+ * - No business logic
+ * - No transformation
+ * - No persistence logic
  * ==========================================================
  */
 
+
 import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
+  NormalizedProduct,
+} from "@/core/normalization/normalizer.types";
+
 
 import {
   UniversalStore,
 } from "../store/universal.store";
+
 
 import type {
   UniversalEntity,
@@ -29,77 +33,119 @@ import type {
   UniversalStoreResult,
 } from "../store/universal.types";
 
+
 import {
   ProductRepository,
 } from "./product.repository";
+
 
 import type {
   ProductRepositoryFilter,
 } from "./product.repository.types";
 
+
+
 export class MemoryProductRepository
   extends ProductRepository {
 
+
+
   private readonly store =
-    new UniversalStore<AdapterProduct>();
+    new UniversalStore<NormalizedProduct>();
+
+
 
   async create(
-    entity: UniversalEntity<AdapterProduct>
-  ): Promise<
+    entity: UniversalEntity<NormalizedProduct>
+  ):
+  Promise<
     UniversalStoreResult<
-      UniversalEntity<AdapterProduct>
+      UniversalEntity<NormalizedProduct>
     >
   > {
+
     return this.store.create(entity);
+
   }
+
+
 
   async update(
-    entity: UniversalEntity<AdapterProduct>
-  ): Promise<
+    entity: UniversalEntity<NormalizedProduct>
+  ):
+  Promise<
     UniversalStoreResult<
-      UniversalEntity<AdapterProduct>
+      UniversalEntity<NormalizedProduct>
     >
   > {
+
     return this.store.update(entity);
+
   }
 
+
+
   async upsert(
-    entity: UniversalEntity<AdapterProduct>
-  ): Promise<
+    entity: UniversalEntity<NormalizedProduct>
+  ):
+  Promise<
     UniversalStoreResult<
-      UniversalEntity<AdapterProduct>
+      UniversalEntity<NormalizedProduct>
     >
   > {
+
     return this.store.upsert(entity);
+
   }
+
+
 
   async findById(
     id: string
-  ): Promise<
+  ):
+  Promise<
     UniversalStoreResult<
-      UniversalEntity<AdapterProduct>
+      UniversalEntity<NormalizedProduct>
     >
   > {
+
     return this.store.findById(id);
+
   }
+
+
 
   async find(
     query?: UniversalQuery
-  ): Promise<
+  ):
+  Promise<
     UniversalStoreResult<
-      readonly UniversalEntity<AdapterProduct>[]
+      readonly UniversalEntity<NormalizedProduct>[]
     >
   > {
-    return this.store.find(query ?? {});
+
+    return this.store.find(
+      query ?? {}
+    );
+
   }
+
+
 
   async delete(
     id: string
-  ): Promise<
+  ):
+  Promise<
     UniversalStoreResult<boolean>
   > {
+
     return this.store.delete(id);
-  }  async exists(
+
+  }
+
+
+
+  async exists(
     id: string
   ): Promise<boolean> {
 
@@ -107,61 +153,95 @@ export class MemoryProductRepository
 
   }
 
+
+
   async findBySku(
-  sku: string
-): Promise<
-  UniversalStoreResult<
-    UniversalEntity<AdapterProduct>
-  >
-> {
-
-  const result = await this.find();
-
-  const product = result.data.find(
-    item => item.data.sku === sku
-  );
-
-  return {
-    success: !!product,
-    data: product as UniversalEntity<AdapterProduct>,
-  };
-
-}
-
-  async findByExternalId(
-  externalId: string
-): Promise<
-  UniversalStoreResult<
-    UniversalEntity<AdapterProduct>
-  >
-> {
-
-  const result = await this.find();
-
-  const product =
-  result.data.find(
-    item =>
-      item.data.metadata?.externalId === externalId
-  );
-
-  return {
-    success: !!product,
-    data: product as UniversalEntity<AdapterProduct>,
-  };
-
-}
-
-  async findProducts(
-    _filter: ProductRepositoryFilter
-  ): Promise<
+    sku: string
+  ):
+  Promise<
     UniversalStoreResult<
-      readonly UniversalEntity<AdapterProduct>[]
+      UniversalEntity<NormalizedProduct>
     >
   > {
-    return this.find();
+
+    const result =
+      await this.find();
+
+
+
+    const product =
+      result.data.find(
+        item =>
+          item.data.sku === sku
+      );
+
+
+
+    return {
+
+      success: Boolean(product),
+
+      data:
+        product as UniversalEntity<NormalizedProduct>
+
+    };
+
   }
 
+
+
+  async findByExternalId(
+    externalId: string
+  ):
+  Promise<
+    UniversalStoreResult<
+      UniversalEntity<NormalizedProduct>
+    >
+  > {
+
+    const result =
+      await this.find();
+
+
+
+    const product =
+      result.data.find(
+        item =>
+          item.data.metadata?.externalId === externalId
+      );
+
+
+
+    return {
+
+      success: Boolean(product),
+
+      data:
+        product as UniversalEntity<NormalizedProduct>
+
+    };
+
+  }
+
+
+
+  async findProducts(
+    _filter?: ProductRepositoryFilter
+  ):
+  Promise<
+    UniversalStoreResult<
+      readonly UniversalEntity<NormalizedProduct>[]
+    >
+  > {
+
+    return this.find();
+
+  }
+
+
 }
+
+
 
 export const productRepository =
   new MemoryProductRepository();

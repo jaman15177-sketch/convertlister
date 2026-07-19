@@ -1,73 +1,53 @@
 /**
- * ==========================================================
+ * ============================================================
  * ADAPTER FACTORY
- * ==========================================================
- *
- * Creates marketplace adapter instances.
- *
- * Rules
- * ----------------------------------------------------------
- * • Factory only
- * • No business logic
- * • No API calls
- * • No data mapping
- * ==========================================================
+ * Enterprise Production Ready
+ * ============================================================
  */
-
-import { ImportSource } from "@/lib/core/import";
 
 import type {
   AdapterContract,
 } from "./adapter.contract";
 
-import {
-  UnsupportedAdapterError,
-} from "./adapter.errors";
-
-import {
-  AliExpressAdapter,
-} from "@/adapters/aliexpress/aliexpress.adapter";
-
-import {
-  AmazonAdapter,
-} from "@/adapters/amazon/amazon.adapter";
-
-import {
-  ShopifyAdapter,
-} from "@/adapters/shopify/shopify.adapter";
-
-import {
-  TikTokAdapter,
-} from "@/adapters/tiktok/tiktok.adapter";
+import { AliExpressAdapter }
+from "../aliexpress/aliexpress.adapter";
 
 export class AdapterFactory {
 
+  /**
+   * Create adapter by marketplace name.
+   */
   static create(
-    source: ImportSource
+    marketplace: string
   ): AdapterContract<any, any> {
 
-    switch (source) {
+    switch (
+      marketplace.toLowerCase()
+    ) {
 
-      case ImportSource.ALIEXPRESS:
+      case "aliexpress":
         return new AliExpressAdapter();
 
-      case ImportSource.AMAZON:
-        return new AmazonAdapter();
-
-      case ImportSource.SHOPIFY:
-        return new ShopifyAdapter();
-
-      case ImportSource.MANUAL:
-      case ImportSource.CSV:
-      case ImportSource.API:
-      case ImportSource.ETSY:
-      case ImportSource.WOOCOMMERCE:
-        throw new UnsupportedAdapterError(source);
-
       default:
-        throw new UnsupportedAdapterError(source);
+        throw new Error(
+          `Unsupported marketplace: ${marketplace}`
+        );
 
     }
+
+  }
+
+  /**
+   * Create all supported adapters.
+   */
+  static createAll():
+  AdapterContract<any, any>[] {
+
+    return [
+
+      new AliExpressAdapter(),
+
+    ];
 
   }
 

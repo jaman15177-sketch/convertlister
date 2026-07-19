@@ -30,33 +30,26 @@
  * ✓ AI pipeline ready
  * ============================================================
  */
-
 import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
-
+  NormalizedProduct,
+} from "@/core/normalization";
 
 import type {
   CanonicalServiceResult,
 } from "./canonical.service";
 
-
 import {
   CanonicalService,
 } from "./canonical.service";
-
 
 import {
   DuplicateDetector,
 } from "./duplicate.detector";
 
-
 import type {
   CanonicalProduct,
   DuplicateResult,
 } from "./canonical.types";
-
-
 
 /**
  * ============================================================
@@ -67,8 +60,7 @@ import type {
 export interface CanonicalEngineInput {
 
   readonly product:
-    AdapterProduct;
-
+    NormalizedProduct;
 
   readonly existingProducts?:
     ReadonlyArray<CanonicalProduct>;

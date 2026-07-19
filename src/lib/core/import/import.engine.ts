@@ -1,15 +1,36 @@
+
+import type {
+  RawProduct,
+  NormalizedProduct,
+} from "@/core/normalization/normalizer.types";
+
 import { ProductNormalizer } from "@/core/normalization/product-normalizer";
-import type { RawProduct } from "@/core/normalization/product-normalizer";
-import type { AdapterProduct } from "@/adapters/core/adapter.contract";
+import { NormalizerMapper } from "@/core/normalization/normalizer.mapper";
+
+import { AdapterMapper } from "@/adapters/core/adapter.mapper";
+
+import { CanonicalEngine } from "@/lib/core/canonical";
+
+import { universalStoreRegistry } from "@/lib/core/store/universal.store.registry";
+
 import { ImportMapper } from "./import.mapper";
-import {
-  CanonicalEngine,
-} from "@/lib/core/canonical";
-import { universalStoreRegistry }
-from "@/lib/core/store/universal.store.registry";
 import { importValidator } from "./import.validator";
 import { DEFAULT_IMPORT_BATCH_SIZE } from "./import.constants";
-import type { ImportEngineContract } from "./import.contract";
+import { ImportIdentity } from "./import.identity";
+
+import {
+  ImportDuplicatePolicy,
+  ImportAction,
+} from "./import.duplicate";
+
+import {
+  productPersistenceService,
+} from "../persistence";
+
+import type {
+  ImportEngineContract,
+} from "./import.contract";
+
 import type {
   ImportRequest,
   ImportResult,
@@ -17,17 +38,7 @@ import type {
   ImportError,
   ImportSource,
 } from "./import.types";
-import {
-  productPersistenceService,
-} from "../persistence";
-import {
-  ImportDuplicatePolicy,
-  ImportAction,
-} from "./import.duplicate";
 
-import {
-  ImportIdentity,
-} from "./import.identity";
 export class ImportEngine implements ImportEngineContract {
 private readonly canonicalEngine =
     new CanonicalEngine();
@@ -35,7 +46,7 @@ private readonly canonicalEngine =
   product: RawProduct,
   source: ImportSource,
   organizationId: string
-): Promise<AdapterProduct> {
+): Promise<NormalizedProduct> {
 
     const normalized =
   ProductNormalizer.normalize(
@@ -109,7 +120,7 @@ return normalized;
       duplicated: 0,
     };
 
-    const products: AdapterProduct[] = [];
+    const products: NormalizedProduct[] = [];
     const errors: ImportError[] = [];
 
     for (

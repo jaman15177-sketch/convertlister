@@ -30,9 +30,8 @@
  */
 
 import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
-
+    NormalizedProduct,
+} from "@/core/normalization";
 import {
   CanonicalErrorFactory,
 } from "./canonical.errors";
@@ -65,9 +64,8 @@ export class CanonicalValidator {
    * Validate adapter product
    */
   public validate(
-    product: AdapterProduct
-  ): CanonicalValidationResult {
-
+  product: NormalizedProduct
+): CanonicalValidationResult {
 
     const errors: string[] = [];
 
@@ -129,14 +127,14 @@ export class CanonicalValidator {
      */
 
     if (
-      typeof product.price !== "number" ||
-      Number.isNaN(product.price)
-    ) {
-
-      errors.push(
-        "Product price must be numeric"
-      );
-    }
+  !product.price ||
+  typeof product.price.amount !== "number" ||
+  Number.isNaN(product.price.amount)
+) {
+  errors.push(
+    "Product price amount must be numeric"
+  );
+}
 
 
     /* --------------------------------------------------------
@@ -175,9 +173,8 @@ export class CanonicalValidator {
    * Throws when invalid
    */
   public assertValid(
-    product: AdapterProduct
-  ): void {
-
+  product: NormalizedProduct
+): void {
 
     const result =
       this.validate(product);

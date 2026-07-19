@@ -1,31 +1,6 @@
-/**
- * ==========================================================
- * SUPABASE PRODUCT REPOSITORY
- * ==========================================================
- *
- * Production Product Persistence Layer
- *
- * Responsibilities:
- * - Supabase CRUD operations
- * - Repository implementation
- * - Domain persistence boundary
- *
- * Rules:
- * - No business logic
- * - No validation logic
- * - Mapping handled by mapper
- * ==========================================================
- */
-
-
 import {
   createClient,
 } from "@/lib/supabase/server";
-
-
-import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
 
 
 import type {
@@ -38,6 +13,7 @@ import type {
   SupabaseProductUpdateInput,
   SupabaseProductQuery,
 } from "./supabase.product.types";
+
 
 import {
   SupabaseProductMapper,
@@ -58,6 +34,11 @@ import type {
 } from "../store/universal.types";
 
 
+import type {
+  NormalizedProduct,
+} from "@/core/normalization/normalizer.types";
+
+
 
 export class SupabaseProductRepository
 implements SupabaseProductRepositoryContract {
@@ -65,96 +46,19 @@ implements SupabaseProductRepositoryContract {
 
 
   private async client() {
-
     return createClient();
-
   }
 
 
 
-  /**
-   * CREATE
-   */
   async create(
-    input:
-      SupabaseProductCreateInput
+    input: SupabaseProductCreateInput
   ):
-    Promise<
-      UniversalStoreResult<
-        UniversalEntity<AdapterProduct>
-      >
+  Promise<
+    UniversalStoreResult<
+      UniversalEntity<NormalizedProduct>
     >
-  {
-
-    try {
-
-      const supabase =
-        await this.client();
-
-
-      const payload =
-        SupabaseProductMapper.toDatabase(
-          input
-        );
-
-
-      const {
-        data,
-        error,
-      } =
-        await supabase
-          .from("products")
-          .insert(payload)
-          .select()
-          .single();
-
-
-
-      if (error || !data) {
-
-  throw new ProductReadError(
-    error?.message
-  );
-
-}
-
-
-return {
-
-  success: true,
-
-  data:
-    SupabaseProductMapper.toEntity(
-      data
-    ),
-
-};
-
-
-} catch(error) {
-
-
-        
-
-      throw new ProductCreateError(
-        error instanceof Error
-          ? error.message
-          : undefined
-      );
-
-    }
-
-  }
-
-
-
- /**
- * FIND BY ID
- */
-async findById(
-  id: string,
-  organizationId: string
-)
+  >
   {
 
     try {
@@ -165,44 +69,36 @@ async findById(
 
       const {
         data,
-        error,
+        error
       } =
-        await supabase
-          .from("products")
-.select("*")
-.eq("id", id)
-.eq("organization_id", organizationId)
-.single();
+      await supabase
+        .from("products")
+        .insert(
+          SupabaseProductMapper.toDatabase(input)
+        )
+        .select()
+        .single();
 
 
 
-      if (error || !data) {
+      if(error || !data)
+        throw new ProductCreateError(error?.message);
 
-        throw new ProductReadError(
-          error?.message
-        );
-
-      }
 
 
       return {
-
-        success: true,
-
+        success:true,
         data:
-          SupabaseProductMapper.toEntity(
-            data
-          ),
-
+          SupabaseProductMapper.toEntity(data)
       };
 
 
-    } catch(error) {
+    } catch(error){
 
-      throw new ProductReadError(
+      throw new ProductCreateError(
         error instanceof Error
-          ? error.message
-          : undefined
+        ? error.message
+        : undefined
       );
 
     }
@@ -211,12 +107,55 @@ async findById(
 
 
 
-  /**
-   * FIND
-   */
+
+  async findById(
+    id:string,
+    organizationId:string
+  )
+  {
+
+    const supabase =
+      await this.client();
+
+
+    const {
+      data,
+      error
+    }
+    =
+    await supabase
+      .from("products")
+      .select("*")
+      .eq("id",id)
+      .eq(
+        "organization_id",
+        organizationId
+      )
+      .single();
+
+
+
+    if(error || !data)
+      throw new ProductReadError(error?.message);
+
+
+
+    return {
+
+      success:true,
+
+      data:
+        SupabaseProductMapper.toEntity(data)
+
+    };
+
+  }
+
+
+
+
   async find(
-    query?:
-      SupabaseProductQuery
+    query?:SupabaseProductQuery
   )
   {
 
@@ -226,73 +165,31 @@ async findById(
 
     let request =
       supabase
-        .from("products")
-        .select("*");
+      .from("products")
+      .select("*");
 
 
 
-    if(query?.organization_id){
-
+    if(query?.organization_id)
       request =
         request.eq(
           "organization_id",
           query.organization_id
         );
 
-    }
-
-
-
-    if(query?.status){
-
-      request =
-        request.eq(
-          "status",
-          query.status
-        );
-
-    }
-
-
-
-    if(query?.is_ready !== undefined){
-
-      request =
-        request.eq(
-          "is_ready",
-          query.is_ready
-        );
-
-    }
-
-
-
-    if(query?.limit){
-
-      request =
-        request.limit(
-          query.limit
-        );
-
-    }
-
 
 
     const {
       data,
-      error,
-    } =
-      await request;
-
-
-
-    if(error){
-
-      throw new ProductReadError(
-        error.message
-      );
-
+      error
     }
+    =
+    await request;
+
+
+
+    if(error)
+      throw new ProductReadError(error.message);
 
 
 
@@ -302,9 +199,9 @@ async findById(
 
       data:
         (data ?? [])
-          .map(
-            SupabaseProductMapper.toEntity
-          ),
+        .map(
+          SupabaseProductMapper.toEntity
+        )
 
     };
 
@@ -312,113 +209,42 @@ async findById(
 
 
 
-  /**
-   * UPDATE
-   */
+
+
   async update(
-  id: string,
-  organizationId: string,
-  input: SupabaseProductUpdateInput
-)
-  {
-
-    try {
-
-      const supabase =
-        await this.client();
-
-
-      const {
-        data,
-        error,
-      } =
-        await supabase
-          .from("products")
-          .update(
-            SupabaseProductMapper.toUpdate(
-              input
-            )
-          )
-          .eq("organization_id", organizationId)
-          .select()
-          .single();
-
-
-
-      if(error || !data){
-
-        throw new ProductUpdateError(
-          error?.message
-        );
-
-      }
-
-
-
-      return {
-
-        success:true,
-
-        data:
-          SupabaseProductMapper.toEntity(
-            data
-          ),
-
-      };
-
-
-    }catch(error){
-
-      throw new ProductUpdateError(
-        error instanceof Error
-          ? error.message
-          : undefined
-      );
-
-    }
-
-  }
-
-
-
-  /**
-   * UPSERT
-   */
-  async upsert(
-    input:
-      SupabaseProductCreateInput
+    id:string,
+    organizationId:string,
+    input:SupabaseProductUpdateInput
   )
   {
+
 
     const supabase =
       await this.client();
 
 
-    const payload =
-      SupabaseProductMapper.toDatabase(
-        input
-      );
-
-
     const {
       data,
-      error,
-    } =
-      await supabase
-        .from("products")
-        .upsert(payload)
-        .select()
-        .single();
-
-
-
-    if(error || !data){
-
-      throw new ProductCreateError(
-        error?.message
-      );
-
+      error
     }
+    =
+    await supabase
+      .from("products")
+      .update(
+        SupabaseProductMapper.toUpdate(input)
+      )
+      .eq("id",id)
+      .eq(
+        "organization_id",
+        organizationId
+      )
+      .select()
+      .single();
+
+
+
+    if(error || !data)
+      throw new ProductUpdateError(error?.message);
 
 
 
@@ -427,23 +253,19 @@ async findById(
       success:true,
 
       data:
-        SupabaseProductMapper.toEntity(
-          data
-        ),
+        SupabaseProductMapper.toEntity(data)
 
     };
+
 
   }
 
 
 
-  /**
-   * DELETE
-   */
-  async delete(
-  id: string,
-  organizationId: string
-)
+
+  async upsert(
+    input:SupabaseProductCreateInput
+  )
   {
 
     const supabase =
@@ -451,172 +273,209 @@ async findById(
 
 
     const {
-      error,
-    } =
-      await supabase
-        .from("products")
-        .delete()
-.eq("id", id)
-.eq("organization_id", organizationId)
+      data,
+      error
+    }
+    =
+    await supabase
+      .from("products")
+      .upsert(
+        SupabaseProductMapper.toDatabase(input)
+      )
+      .select()
+      .single();
 
 
 
-    if(error){
-
-  throw new ProductDeleteError(
-    error.message
-  );
-
-}
+    if(error || !data)
+      throw new ProductCreateError(error?.message);
 
 
-return {
 
-  success:true,
+    return {
 
-  data:true,
+      success:true,
 
-};
+      data:
+        SupabaseProductMapper.toEntity(data)
 
-}
- 
-/**
- * Find product by SKU
- */
-async findBySku(
-  sku: string,
-  organizationId: string
-): Promise<
-  UniversalStoreResult<
-    UniversalEntity<AdapterProduct>
-  >
-> {
+    };
 
-  try {
+  }
+
+
+
+
+
+  async delete(
+    id:string,
+    organizationId:string
+  )
+  {
 
     const supabase =
       await this.client();
 
+
+
     const {
-      data,
-      error,
-    } =
-      await supabase
-        .from("products")
-        .select("*")
-        .eq(
-          "metadata->>sku",
-          sku
-        )
-        .single();
-
-    if (error || !data) {
-
-      throw new ProductReadError(
-        error?.message
+      error
+    }
+    =
+    await supabase
+      .from("products")
+      .delete()
+      .eq("id",id)
+      .eq(
+        "organization_id",
+        organizationId
       );
 
-    }
+
+
+    if(error)
+      throw new ProductDeleteError(
+        error.message
+      );
+
+
 
     return {
 
-      success: true,
+      success:true,
 
-      data:
-        SupabaseProductMapper.toEntity(
-          data
-        ),
+      data:true
 
     };
 
-  } catch (error) {
-
-    throw new ProductReadError(
-      error instanceof Error
-        ? error.message
-        : undefined
-    );
-
   }
 
-}
-    /**
- * Find product by external marketplace ID
- */
-async findByExternalId(
-  externalId: string,
-  organizationId: string
-) {
 
-    try {
 
-      const supabase =
-        await this.client();
 
-      const {
-        data,
-        error,
-      } =
-        await supabase
-          .from("products")
-          .select("*")
-          .eq(
-            "metadata->>externalId",
-            externalId
-          )
-          .single();
 
-      if (error || !data) {
-
-        throw new ProductReadError(
-          error?.message
-        );
-
-      }
-
-      return {
-
-        success: true,
-
-        data:
-          SupabaseProductMapper.toEntity(
-            data
-          ),
-
-      };
-
-    } catch (error) {
-
-      throw new ProductReadError(
-        error instanceof Error
-          ? error.message
-          : undefined
-      );
-
-    }
-
-  }
-
- 
-  
-/**
-   * EXISTS
-   */
   async exists(
-    id: string,
-    organizationId: string
-  ): Promise<boolean> {
+    id:string,
+    organizationId:string
+  )
+  {
+
     const result =
       await this.findById(
         id,
         organizationId
       );
 
+
     return result.success;
 
   }
 
+
+
+
+  async findBySku(
+    sku:string,
+    organizationId:string
+  )
+  {
+
+    const supabase =
+      await this.client();
+
+
+
+    const {
+      data,
+      error
+    }
+    =
+    await supabase
+      .from("products")
+      .select("*")
+      .eq(
+        "organization_id",
+        organizationId
+      )
+      .eq(
+        "metadata->>sku",
+        sku
+      )
+      .single();
+
+
+
+    if(error || !data)
+      throw new ProductReadError(error?.message);
+
+
+
+    return {
+
+      success:true,
+
+      data:
+        SupabaseProductMapper.toEntity(data)
+
+    };
+
+  }
+
+
+
+
+
+  async findByExternalId(
+    externalId:string,
+    organizationId:string
+  )
+  {
+
+    const supabase =
+      await this.client();
+
+
+
+    const {
+      data,
+      error
+    }
+    =
+    await supabase
+      .from("products")
+      .select("*")
+      .eq(
+        "organization_id",
+        organizationId
+      )
+      .eq(
+        "metadata->>externalId",
+        externalId
+      )
+      .single();
+
+
+
+    if(error || !data)
+      throw new ProductReadError(error?.message);
+
+
+
+    return {
+
+      success:true,
+
+      data:
+        SupabaseProductMapper.toEntity(data)
+
+    };
+
+  }
+
+
 }
 
+
+
 export const supabaseProductRepository =
-  new SupabaseProductRepository();
+new SupabaseProductRepository();

@@ -32,10 +32,9 @@
  * ✓ Build-safe
  * ============================================================
  */
-
 import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
+  NormalizedProduct,
+} from "@/core/normalization";
 
 /* ============================================================
  * CANONICAL ID
@@ -82,8 +81,7 @@ export interface CanonicalProduct {
 
 
   readonly attributes:
-    Readonly<Record<string,string>>;
-
+  Readonly<Record<string, unknown>>;
 
   readonly variants:
     ReadonlyArray<CanonicalVariant>;
@@ -114,7 +112,7 @@ export interface CanonicalVariant {
   readonly title?: string;
 
   readonly attributes:
-    Readonly<Record<string,string>>;
+  Readonly<Record<string, unknown>>;
 }
 
 
@@ -151,10 +149,14 @@ export interface CanonicalNormalizedProduct {
   readonly barcode: string;
 
   readonly attributes:
-    Readonly<Record<string,string>>;
-}
+  Readonly<Record<string, unknown>>;
+ }
 
-
+ /**
+  * Root pipeline contract
+  */
+export type CanonicalInput =
+  NormalizedProduct;
 /* ============================================================
  * IDENTITY
  * ============================================================
@@ -162,6 +164,7 @@ export interface CanonicalNormalizedProduct {
 
 export enum IdentityMatchLevel {
 
+ 
   EXACT = "exact",
 
   STRONG = "strong",
@@ -249,9 +252,9 @@ export interface MergeResult {
 
 export interface CanonicalBuildInput {
 
-  readonly product: AdapterProduct;
-}
+  readonly product: NormalizedProduct;
 
+}
 
 export interface CanonicalEngineResult {
 

@@ -16,10 +16,9 @@
  * - No import logic
  * ==========================================================
  */
-
 import type {
   RawProduct,
-} from "@/core/normalization/product-normalizer";
+} from "@/core/normalization/normalizer.types";
 
 import type {
   CsvValidatorContract,

@@ -23,8 +23,8 @@ import type {
 } from "@/lib/core/canonical/canonical.engine";
 
 import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
+  NormalizedProduct,
+} from "@/core/normalization";
 
 /* ==========================================================
  * IMPORT IDENTITY
@@ -33,26 +33,26 @@ import type {
 
 export class ImportIdentity {
 
-  /**
-   * Apply canonical identity
-   * to AdapterProduct.
-   */
-  static apply(
-    product: AdapterProduct,
-    canonical: CanonicalEngineOutput,
-  ): AdapterProduct {
+ /**
+ * Apply canonical identity
+ * to normalized product.
+ */
+static apply(
+  product: NormalizedProduct,
+  canonical: CanonicalEngineOutput,
+): NormalizedProduct {
 
-    return {
+  return {
 
-      ...product,
+    ...product,
 
-      id:
-        canonical.canonical.key.value,
+    id:
+      canonical.canonical.key.value,
 
-    };
+  };
 
-  }
-
+}
+    
   /**
    * Universal Store ID
    */

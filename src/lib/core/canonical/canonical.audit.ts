@@ -30,7 +30,9 @@
  * ✓ AI explainable
  * ============================================================
  */
-
+import {
+  CANONICAL_VERSION,
+} from "./canonical.constants";
 
 /* ============================================================
  * AUDIT ACTION
@@ -78,15 +80,16 @@ export interface CanonicalAuditRecord {
 
   readonly timestamp: Date;
 
-
+readonly stage?: string;
   readonly actor?:
     string;
-
-
+readonly durationMs?: number;
+readonly version: string;
+readonly duplicateReason?: string;
   readonly reason?:
     string;
-
-
+readonly fingerprint?: string;
+readonly confidence?: number;
   readonly metadata?:
     Readonly<
       Record<string, unknown>
@@ -138,37 +141,42 @@ export class CanonicalAuditBuilder {
 
     return {
 
-      id:
-        this.generateId(),
+  id:
+    this.generateId(),
 
+  version:
+    CANONICAL_VERSION,
 
-      action:
-        params.action,
+  action:
+    params.action,
 
+  productId:
+    params.productId,
 
-      productId:
-        params.productId,
+  timestamp:
+    new Date(),
 
+  stage:
+    params.metadata?.stage as string | undefined,
 
-      timestamp:
-        new Date(),
+  actor:
+    params.actor,
 
+  durationMs:
+    params.metadata?.durationMs as number | undefined,
 
-      actor:
-        params.actor,
+  duplicateReason:
+    params.reason,
 
+  reason:
+    params.reason,
 
-      reason:
-        params.reason,
+  metadata:
+    params.metadata,
 
+ };
 
-      metadata:
-        params.metadata,
-
-    };
-
-  }
-
+}
 
 
   /**

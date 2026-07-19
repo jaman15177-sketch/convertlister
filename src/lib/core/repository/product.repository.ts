@@ -17,8 +17,8 @@
  */
 
 import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
+  NormalizedProduct,
+} from "@/core/normalization/normalizer.types";
 
 import type {
   UniversalEntity,
@@ -33,43 +33,33 @@ import type {
   ProductRepositoryFilter,
 } from "./product.repository.types";
 
-/* ==========================================================
- * PRODUCT REPOSITORY
- * ========================================================== */
 
 export abstract class ProductRepository
-  extends UniversalRepository<AdapterProduct> {
+  extends UniversalRepository<NormalizedProduct> {
 
-  /**
-   * Find by SKU
-   */
   abstract findBySku(
     sku: string
   ): Promise<
     UniversalStoreResult<
-      UniversalEntity<AdapterProduct>
+      UniversalEntity<NormalizedProduct>
     >
   >;
 
-  /**
-   * Find by external marketplace id
-   */
+
   abstract findByExternalId(
     externalId: string
   ): Promise<
     UniversalStoreResult<
-      UniversalEntity<AdapterProduct>
+      UniversalEntity<NormalizedProduct>
     >
   >;
 
-  /**
-   * Product search
-   */
+
   abstract findProducts(
     filter?: ProductRepositoryFilter
   ): Promise<
     UniversalStoreResult<
-      readonly UniversalEntity<AdapterProduct>[]
+      readonly UniversalEntity<NormalizedProduct>[]
     >
   >;
 

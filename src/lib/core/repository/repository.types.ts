@@ -1,127 +1,213 @@
 /**
- * ==========================================================
- * REPOSITORY TYPES
- * ==========================================================
+ * Repository Layer
+ * Shared Type Definitions
  *
- * Shared repository layer types.
- *
- * Responsibilities:
- * - Repository operation types
- * - Pagination models
- * - Query options
- * - Result contracts
- *
- * Rules:
- * - Types only
+ * Responsibility:
+ * - Pure repository contracts data types
  * - No business logic
  * - No database dependency
- * ==========================================================
+ * - No implementation
  */
 
+export type RepositoryID = string;
 
-/* ==========================================================
- * PAGINATION
- * ========================================================== */
+export type RepositoryTimestamp = Date;
 
-export interface RepositoryPagination {
+export type RepositoryStatus =
+  | "idle"
+  | "loading"
+  | "success"
+  | "failed";
 
-  readonly page: number;
 
-  readonly limit: number;
+export interface RepositoryMetadata {
+  readonly id?: RepositoryID;
 
+  readonly createdAt?: RepositoryTimestamp;
+
+  readonly updatedAt?: RepositoryTimestamp;
+
+  readonly createdBy?: string;
+
+  readonly updatedBy?: string;
+
+  readonly version?: number;
 }
 
 
+export interface RepositoryContext {
+  readonly tenantId?: string;
 
-/* ==========================================================
- * SORTING
- * ========================================================== */
+  readonly organizationId?: string;
 
-export type RepositorySortOrder =
-  | "asc"
-  | "desc";
+  readonly userId?: string;
+
+  readonly requestId?: string;
+}
+
+
+export interface RepositoryPagination {
+  readonly page?: number;
+
+  readonly limit?: number;
+
+  readonly offset?: number;
+}
 
 
 export interface RepositorySort {
-
   readonly field: string;
 
-  readonly order:
-    RepositorySortOrder;
-
+  readonly direction:
+    | "asc"
+    | "desc";
 }
 
 
+export interface RepositoryFilter {
+  readonly field: string;
 
-/* ==========================================================
- * QUERY OPTIONS
- * ========================================================== */
+  readonly operator:
+    | "eq"
+    | "neq"
+    | "gt"
+    | "gte"
+    | "lt"
+    | "lte"
+    | "contains"
+    | "in";
 
-export interface RepositoryOptions {
-
-  readonly pagination?:
-    RepositoryPagination;
-
-
-  readonly sort?:
-    RepositorySort;
-
-
-  readonly includeDeleted?:
-    boolean;
-
+  readonly value: unknown;
 }
 
 
+export interface RepositoryQuery {
+  readonly filters?: readonly RepositoryFilter[];
 
-/* ==========================================================
- * FILTER
- * ========================================================== */
+  readonly sort?: readonly RepositorySort[];
 
-export type RepositoryFilterValue =
-  string |
-  number |
-  boolean |
-  null;
+  readonly pagination?: RepositoryPagination;
+}
 
 
-export type RepositoryFilter =
-  Record<
-    string,
-    RepositoryFilterValue
-  >;
+export interface RepositoryCreateInput<T> {
+  readonly data: T;
+
+  readonly context?: RepositoryContext;
+}
 
 
+export interface RepositoryUpdateInput<T> {
+  readonly id: RepositoryID;
 
-/* ==========================================================
- * REPOSITORY RESPONSE
- * ========================================================== */
+  readonly data: Partial<T>;
 
-export interface RepositoryResponse<T> {
+  readonly context?: RepositoryContext;
+}
 
+
+export interface RepositoryDeleteInput {
+  readonly id: RepositoryID;
+
+  readonly context?: RepositoryContext;
+}
+
+
+export interface RepositoryResult<T> {
   readonly success: boolean;
 
   readonly data?: T;
 
   readonly error?: string;
 
+  readonly status?: RepositoryStatus;
 }
 
 
+export interface RepositoryBatchInput<T> {
+  readonly items: readonly T[];
 
-/* ==========================================================
- * BULK OPERATION RESULT
- * ========================================================== */
+  readonly context?: RepositoryContext;
+}
 
-export interface RepositoryBulkResult<T> {
 
-  readonly total: number;
+export interface RepositoryTransactionContext {
+  readonly transactionId: string;
 
-  readonly successful: number;
+  readonly startedAt: RepositoryTimestamp;
 
-  readonly failed: number;
+  readonly context?: RepositoryContext;
+}
 
-  readonly items:
-    readonly T[];
 
+export interface RepositoryHealthStatus {
+  readonly healthy: boolean;
+
+  readonly latency?: number;
+
+  readonly message?: string;
+}
+
+
+export interface RepositoryMetric {
+  readonly name: string;
+
+  readonly value: number;
+
+  readonly timestamp: RepositoryTimestamp;
+}
+
+
+export interface RepositoryAuditRecord {
+  readonly action:
+    | "create"
+    | "update"
+    | "delete"
+    | "read";
+
+  readonly entity: string;
+
+  readonly entityId?: RepositoryID;
+
+  readonly timestamp: RepositoryTimestamp;
+
+  readonly context?: RepositoryContext;
+}
+
+
+export interface RepositoryCacheEntry<T> {
+  readonly key: string;
+
+  readonly value: T;
+
+  readonly expiresAt?: RepositoryTimestamp;
+}
+
+
+export interface RepositoryTelemetry {
+  readonly operation: string;
+
+  readonly duration?: number;
+
+  readonly success: boolean;
+
+  readonly timestamp: RepositoryTimestamp;
+}
+
+
+export interface RepositoryEventMetadata {
+  readonly eventName: string;
+
+  readonly entityId?: RepositoryID;
+
+  readonly timestamp: RepositoryTimestamp;
+}
+
+
+export interface RepositoryQueueMetadata {
+  readonly jobId?: string;
+
+  readonly queueName?: string;
+
+  readonly retryCount?: number;
 }

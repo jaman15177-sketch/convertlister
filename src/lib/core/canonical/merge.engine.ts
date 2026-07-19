@@ -34,14 +34,14 @@
 
 import type {
   CanonicalProduct,
+  CanonicalVariant,
+  CanonicalSource,
   MergeResult,
 } from "./canonical.types";
-
 
 import {
   MergeStrategy,
 } from "./canonical.types";
-
 
 /**
  * ============================================================
@@ -156,36 +156,28 @@ export class MergeEngine {
         },
 
 
-      variants:
-        [
-          ...existing.variants,
+      variants: this.mergeVariants(
+  existing.variants,
+  incoming.variants
+),
 
-          ...incoming.variants,
+      sources: this.mergeSources(
+  existing.sources,
+  incoming.sources
+),
 
-        ],
+     
 
-
-      sources:
-        [
-          ...existing.sources,
-
-          ...incoming.sources,
-
-        ],
-
-
-      metadata:
-        {
-          ...existing.metadata,
-
-          updatedAt:
-            new Date(),
-
-        },
-
+      metadata: {
+  ...existing.metadata,
+  version: existing.metadata.version,
+  updatedAt: new Date(),
+},
     };
 
   }
+
+  
 
 
   /**
@@ -235,6 +227,45 @@ private resolveOptionalValue(
   }
 
   return current;
+  }private mergeVariants(
+  existing: ReadonlyArray<CanonicalVariant> = [],
+  incoming: ReadonlyArray<CanonicalVariant> = []
+): ReadonlyArray<CanonicalVariant> {
+  const map = new Map<string, CanonicalVariant>();
+
+  for (const variant of existing) {
+    map.set(variant.id, variant);
   }
+
+  for (const variant of incoming) {
+    map.set(variant.id, variant);
+  }
+
+  return [...map.values()];
+}
+
+private mergeSources(
+  existing: ReadonlyArray<CanonicalSource> = [],
+  incoming: ReadonlyArray<CanonicalSource> = []
+): ReadonlyArray<CanonicalSource> {
+
+  const map = new Map<string, CanonicalSource>();
+
+  for (const source of existing) {
+    map.set(
+      `${source.marketplace}:${source.sourceId}`,
+      source
+    );
+  }
+
+  for (const source of incoming) {
+    map.set(
+      `${source.marketplace}:${source.sourceId}`,
+      source
+    );
+  }
+
+  return [...map.values()];
+}
 
 }

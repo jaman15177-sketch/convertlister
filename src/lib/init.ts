@@ -1,8 +1,49 @@
-import { AdapterRegistry } from "@/core/registry/adapter.registry";
-import { CustomMarketAdapter } from "@/adapters/custom/custom-market.adapter";
-// register adapters once globally
-export function bootstrap() {
-  AdapterRegistry.register(new CustomMarketAdapter());
+/**
+ * ============================================================
+ * CONVERTLISTER
+ * APPLICATION INIT
+ * Enterprise Production Ready
+ * ============================================================
+ *
+ * Responsibilities
+ * ------------------------------------------------------------
+ * • Application startup entry
+ * • Execute bootstrap sequence
+ * • Ensure one-time initialization
+ *
+ * Must NOT
+ * ------------------------------------------------------------
+ * ✗ Business logic
+ * ✗ Import products
+ * ✗ Queue processing
+ * ✗ Marketplace API calls
+ * ============================================================
+ */
+
+import { bootstrap } from "./bootstrap";
+
+let initialized = false;
+
+/**
+ * Initialize application.
+ */
+export async function initializeApplication(): Promise<void> {
+
+  if (initialized) {
+    return;
+  }
+
+  await bootstrap();
+
+  initialized = true;
+
 }
 
-bootstrap();
+/**
+ * Application status.
+ */
+export function isApplicationInitialized(): boolean {
+
+  return initialized;
+
+}

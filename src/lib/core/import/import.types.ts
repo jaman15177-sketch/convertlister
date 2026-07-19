@@ -2,11 +2,15 @@ import type {
   AdapterProduct,
   AdapterQuery,
 } from "@/adapters/core/adapter.contract";
-import type { RawProduct } from "@/core/normalization/product-normalizer";
+import type {
+  RawProduct,
+} from "@/core/normalization/normalizer.types";
 import type {
   UniversalEntity,
 } from "../store/universal.types";
-
+import type {
+  NormalizedProduct,
+} from "@/core/normalization/normalizer.types";
 import type {
   PersistenceMode,
 } from "../persistence";         
@@ -208,7 +212,7 @@ export interface ImportError {
 export interface ImportResult {
   success: boolean;
 
-  products: AdapterProduct[];
+  products: NormalizedProduct[];
 
   statistics: ImportStatistics;
 
@@ -236,7 +240,7 @@ export interface ImportPersistenceRequest {
   readonly organizationId: string;
 
   readonly entity:
-    UniversalEntity<AdapterProduct>;
+    UniversalEntity<NormalizedProduct>;
 
   readonly mode:
     PersistenceMode;
@@ -253,7 +257,7 @@ export interface ImportPersistenceBatchRequest {
   readonly organizationId: string;
 
   readonly entities:
-    readonly UniversalEntity<AdapterProduct>[];
+    readonly UniversalEntity<NormalizedProduct>[];
 
   readonly mode:
     PersistenceMode;

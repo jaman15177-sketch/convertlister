@@ -1,64 +1,45 @@
+import type { RawProduct } from "@/core/normalization/normalizer.types";
+import type { AdapterQuery } from "@/adapters/core/adapter.contract";
+import type { ImportSource } from "@/lib/core/import";
 import type {
-  RawProduct,
-} from "@/core/normalization/product-normalizer";
-
-import type {
-  ImportSource,
-} from "@/lib/core/import";
-
+  AdapterProduct,
+} from "@/adapters/core/adapter.contract";
 /**
- * ==========================================================
- * IMPORT API DTO
- * ==========================================================
- *
- * External REST contract.
- *
- * Responsibilities:
- * - REST request payload
- * - REST response payload
- * - API layer only
- *
- * Rules:
- * - No business logic
- * - No persistence logic
- * - No normalization logic
- * - No service dependencies
- * ==========================================================
- */
-
-/* ==========================================================
- * IMPORT REQUEST
- * ==========================================================
+ * ============================================================
+ * MANUAL IMPORT REQUEST
+ * ============================================================
  */
 
 export interface ImportApiRequest {
 
-  readonly source:
-    ImportSource;
+  readonly source: ImportSource;
 
-  readonly products:
-    readonly RawProduct[];
+  readonly products: RawProduct[];
 
 }
 
-/* ==========================================================
- * IMPORT RESPONSE
- * ==========================================================
+/**
+ * ============================================================
+ * MARKETPLACE IMPORT REQUEST
+ * ============================================================
  */
 
-export interface ImportApiResponse {
+export interface MarketplaceImportApiRequest {
+
+  readonly source: ImportSource;
+
+  readonly query: AdapterQuery;
+
+}
+export interface MarketplaceImportResponse {
 
   readonly success: boolean;
 
+  readonly source: ImportSource;
+
+  readonly products: readonly AdapterProduct[];
   readonly imported: number;
 
-  readonly failed: number;
-
-  readonly skipped: number;
-
-  readonly duplicated: number;
-
-  readonly errors?:
-    readonly string[];
+  readonly message: string;
 
 }

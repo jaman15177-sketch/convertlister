@@ -30,11 +30,9 @@
  * ✓ Universal Store ready
  * ============================================================
  */
-
 import type {
-  AdapterProduct,
-} from "@/adapters/core/adapter.contract";
-
+  NormalizedProduct,
+} from "@/core/normalization";
 import type {
   CanonicalProduct,
   CanonicalNormalizedProduct,
@@ -61,7 +59,7 @@ export class CanonicalBuilder {
    * Build canonical product
    */
   public build(params: {
-    product: AdapterProduct;
+    product: NormalizedProduct;
 
     normalized:
       CanonicalNormalizedProduct;
@@ -91,10 +89,7 @@ export class CanonicalBuilder {
 
     return {
 
-      id:
-        params.product.id,
-
-
+      id: params.product.id,
       title:
         params.normalized.title,
 
@@ -142,10 +137,8 @@ export class CanonicalBuilder {
    * Build source information
    */
   private buildSource(
-    product: AdapterProduct
-  ): CanonicalSource {
-
-
+  product: NormalizedProduct
+): CanonicalSource {
     return {
 
       marketplace:
