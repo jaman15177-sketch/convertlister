@@ -6,222 +6,199 @@
 -- ROLES
 -- =====================================================
 
-insert into roles (name)
-values
+INSERT INTO roles (name)
+VALUES
   ('OWNER'),
   ('ADMIN'),
   ('EDITOR'),
   ('VIEWER'),
   ('BILLING_ADMIN')
-on conflict (name) do nothing;
+ON CONFLICT (name) DO NOTHING;
 
 -- =====================================================
 -- PERMISSIONS
 -- =====================================================
 
-insert into permissions (name)
-values
+INSERT INTO permissions (
+    action,
+    name
+)
+VALUES
 
-('org.read'),
-('org.update'),
-('org.delete'),
-('org.manage_members'),
+('org.read', 'org.read'),
+('org.update', 'org.update'),
+('org.delete', 'org.delete'),
+('org.manage_members', 'org.manage_members'),
 
-('workspace.read'),
-('workspace.create'),
-('workspace.update'),
-('workspace.delete'),
+('workspace.read', 'workspace.read'),
+('workspace.create', 'workspace.create'),
+('workspace.update', 'workspace.update'),
+('workspace.delete', 'workspace.delete'),
 
-('project.read'),
-('project.create'),
-('project.update'),
-('project.delete'),
+('project.read', 'project.read'),
+('project.create', 'project.create'),
+('project.update', 'project.update'),
+('project.delete', 'project.delete'),
 
-('analytics.read'),
+('analytics.read', 'analytics.read'),
 
-('billing.read'),
-('billing.manage'),
+('billing.read', 'billing.read'),
+('billing.manage', 'billing.manage'),
 
-('ai.generate'),
+('ai.generate', 'ai.generate'),
 
-('audit.read'),
+('audit.read', 'audit.read'),
 
-('system.admin')
+('system.admin', 'system.admin')
 
-on conflict (name) do nothing;
-
+ON CONFLICT (action) DO NOTHING;
 -- =====================================================
 -- OWNER → ALL PERMISSIONS
 -- =====================================================
 
-insert into role_permissions (
-  role_id,
-  permission_id
+INSERT INTO role_permissions (
+    role_id,
+    permission_id
 )
-
-select
-  r.id,
-  p.id
-
-from roles r
-cross join permissions p
-
-where r.name = 'OWNER'
-
-on conflict do nothing;
+SELECT
+    r.id,
+    p.id
+FROM roles r
+CROSS JOIN permissions p
+WHERE r.name = 'OWNER'
+ON CONFLICT DO NOTHING;
 
 -- =====================================================
 -- ADMIN PERMISSIONS
 -- =====================================================
 
-insert into role_permissions (
-  role_id,
-  permission_id
+INSERT INTO role_permissions (
+    role_id,
+    permission_id
 )
+SELECT
+    r.id,
+    p.id
+FROM roles r
+JOIN permissions p
+ON p.action IN (
 
-select
-  r.id,
-  p.id
+    'org.read',
+    'org.update',
+    'org.manage_members',
 
-from roles r
-join permissions p
-on p.name in (
+    'workspace.read',
+    'workspace.create',
+    'workspace.update',
 
-  'org.read',
-  'org.update',
-  'org.manage_members',
+    'project.read',
+    'project.create',
+    'project.update',
+    'project.delete',
 
-  'workspace.read',
-  'workspace.create',
-  'workspace.update',
+    'analytics.read',
 
-  'project.read',
-  'project.create',
-  'project.update',
-  'project.delete',
+    'billing.read',
 
-  'analytics.read',
+    'ai.generate',
 
-  'billing.read',
-
-  'ai.generate',
-
-  'audit.read'
+    'audit.read'
 
 )
-
-where r.name = 'ADMIN'
-
-on conflict do nothing;
-
+WHERE r.name = 'ADMIN'
+ON CONFLICT DO NOTHING;
 -- =====================================================
 -- EDITOR PERMISSIONS
 -- =====================================================
 
-insert into role_permissions (
-  role_id,
-  permission_id
+INSERT INTO role_permissions (
+    role_id,
+    permission_id
 )
+SELECT
+    r.id,
+    p.id
+FROM roles r
+JOIN permissions p
+ON p.action IN (
 
-select
-  r.id,
-  p.id
+    'workspace.read',
 
-from roles r
-join permissions p
-on p.name in (
+    'project.read',
+    'project.create',
+    'project.update',
 
-  'workspace.read',
+    'analytics.read',
 
-  'project.read',
-  'project.create',
-  'project.update',
-
-  'analytics.read',
-
-  'ai.generate'
+    'ai.generate'
 
 )
-
-where r.name = 'EDITOR'
-
-on conflict do nothing;
+WHERE r.name = 'EDITOR'
+ON CONFLICT DO NOTHING;
 
 -- =====================================================
 -- VIEWER PERMISSIONS
 -- =====================================================
 
-insert into role_permissions (
-  role_id,
-  permission_id
+INSERT INTO role_permissions (
+    role_id,
+    permission_id
 )
+SELECT
+    r.id,
+    p.id
+FROM roles r
+JOIN permissions p
+ON p.action IN (
 
-select
-  r.id,
-  p.id
+    'workspace.read',
 
-from roles r
-join permissions p
-on p.name in (
+    'project.read',
 
-  'workspace.read',
-
-  'project.read',
-
-  'analytics.read'
+    'analytics.read'
 
 )
-
-where r.name = 'VIEWER'
-
-on conflict do nothing;
-
+WHERE r.name = 'VIEWER'
+ON CONFLICT DO NOTHING;
 -- =====================================================
 -- BILLING ADMIN
 -- =====================================================
 
-insert into role_permissions (
-  role_id,
-  permission_id
+INSERT INTO role_permissions (
+    role_id,
+    permission_id
 )
+SELECT
+    r.id,
+    p.id
+FROM roles r
+JOIN permissions p
+ON p.action IN (
 
-select
-  r.id,
-  p.id
+    'billing.read',
+    'billing.manage',
 
-from roles r
-join permissions p
-on p.name in (
-
-  'billing.read',
-  'billing.manage',
-
-  'org.read'
+    'org.read'
 
 )
-
-where r.name = 'BILLING_ADMIN'
-
-on conflict do nothing;
+WHERE r.name = 'BILLING_ADMIN'
+ON CONFLICT DO NOTHING;
 
 -- =====================================================
 -- GOVERNANCE INDEXES
 -- =====================================================
 
-create index if not exists idx_roles_name
-on roles(name);
+CREATE INDEX IF NOT EXISTS idx_roles_name
+ON roles(name);
 
-create index if not exists idx_permissions_name
-on permissions(name);
+CREATE INDEX IF NOT EXISTS idx_org_members_user
+ON organization_members(user_id);
 
-create index if not exists idx_org_members_user
-on organization_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_org_members_org
+ON organization_members(organization_id);
 
-create index if not exists idx_org_members_org
-on organization_members(organization_id);
+CREATE INDEX IF NOT EXISTS idx_role_permissions_role
+ON role_permissions(role_id);
 
-create index if not exists idx_role_permissions_role
-on role_permissions(role_id);
-
-create index if not exists idx_role_permissions_permission
-on role_permissions(permission_id);
+CREATE INDEX IF NOT EXISTS idx_role_permissions_permission
+ON role_permissions(permission_id);

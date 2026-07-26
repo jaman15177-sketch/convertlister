@@ -1,0 +1,6 @@
+-- ============================================================================
+-- 202607230007_ready_products_seed.sql
+-- Ready Products Seed
+-- Intentionally left empty.
+-- Production database does not require demo seed data.
+-- ============================================================================
